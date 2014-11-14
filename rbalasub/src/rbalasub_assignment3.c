@@ -38,6 +38,7 @@ int main(int argc, char **argv)
 	/*Init. Logger*/
 	cse4589_init_log();
 
+	//test change 
 	/*Clear LOGFILE and DUMPFILE*/
 	fclose(fopen(LOGFILE, "w"));
 	fclose(fopen(DUMPFILE, "wb"));
