@@ -1,0 +1,102 @@
+CSE 589 MNC PA3 Design
+Rakesh Balasubramanian
+
+The overall workflow of the program looks like below:
+    * Validate arguments
+    * Look for topology file
+    * Get server id and port 
+    * Get neighbours and cost to neighbours from topology file
+    * Run main select loop
+       * Handle user commands
+       * Wait for update interval and send distance vectors to neighbors
+       * or 
+       * Send distance vectors if command received before interval
+       * Receive distance vectors from neighbors and update the distance vectors
+    
+
+/**************************************
+Data structure for routing Table Entry
+**************************************/
+typedef struct
+{
+    int server_id;
+    int next_hop_server_id;
+    int cost_ofpath;
+} RoutingTableEntry;
+
+
+/*************************************
+Data structure for update field entry
+*************************************/
+typedef struct
+{
+    uint32_t upe_server_ip_addr;
+    uint16_t upe_server_port;
+    uint16_t upe_server_id;
+} Up_field_entry;
+
+/**************************************
+Data structure for update field packet
+**************************************/
+typedef struct
+{
+    uint16_t  num_updates;
+    uint16_t server_port;
+    Up_field_entry *entries; //array of update field entries
+} UpdateFieldPacket;
+
+
+/************************************/
+ Main select loop --start 
+*************************************/
+WHILE(true)
+    Set ReadFD for STDIN
+    Set ReadFD for listening socket
+    Set timeout value
+    res = SELECT(fd_max+1,Readfd,NULL,TIMEOUT);
+    if res >= 0
+        for i = 1 to fd_max
+            if(FD_ISSET(ii,&Readfd))
+                if ii=0
+                    READ_FROM_STDIN();
+                else 
+                    READ_FROM_SOCKET();
+                end if
+            end if
+        end for
+    end if
+end while
+
+READ_FROM_SOCKET(i)
+    CHECK_IP_ADDR_OF_DEST(); 
+    DISPLAY_UPDATE_FIELD_PACKET()
+    UPDATE_ROUTING_TABLE_FROM_PKT();
+END
+
+UPDATE_ROUTING_TABLE_FROM_PKT()
+    BELLMAN_FORD();
+END
+/************************************/
+ Main select loop --end 
+*************************************/
+
+
+
+/****************************************/
+Timer implementation using select --start
+*****************************************/
+while(true)
+    x <- select( … ,TIMEOUT)
+    if (TIMEOUT HAPPENED) //x=0
+        for each item in time_arr[]
+            timeout_count ++ ;
+            if item_timeout_count > 3
+                set item_cost to inf;
+                remove item from array;  
+            end if
+        end for 
+    end if
+end while
+/****************************************/
+Timer implementation using select --end
+*****************************************/
