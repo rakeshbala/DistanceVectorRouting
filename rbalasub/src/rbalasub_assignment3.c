@@ -18,13 +18,17 @@
  *
  * @section DESCRIPTION
  *
- * This contains the main function. Add further description here....
+ * This contains the main function. 
+ * Main validates the command line arguments and starts the application
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "../include/global.h"
 #include "../include/logger.h"
+#include "../include/pa3_application.h"
 
 /**
  * main function
@@ -32,22 +36,59 @@
  * @param  argv The argument list
  * @return 0 EXIT_SUCCESS
  */
+
+
 int main(int argc, char **argv)
 {
 	/*Init. Logger*/
 	cse4589_init_log();
 
-	
-
-	
 	/*Clear LOGFILE and DUMPFILE*/
 	fclose(fopen(LOGFILE, "w"));
 	fclose(fopen(DUMPFILE, "wb"));
 
 	/*Start Here*/
 
-	return 0;
-
-
+	char *top_file_path;
+	float timeout;
 	
+	char opt;
+	/******* Handle inputs *********/
+	while ((opt = getopt(argc, argv, "ti")) != -1) {
+        switch (opt) {
+        case 't': top_file_path = argv[optind]; break;
+        case 'i': {
+        	char *endPtr;
+        	float timeval = strtof(argv[optind],&endPtr);
+        	if (strcmp(endPtr,""))
+        	{
+        		fprintf(stderr, "Usage: %s -t <Path to topology file> -i <Routing Update Interval>\
+            	\n", argv[0]);
+        		exit(EXIT_FAILURE);
+        	}else{
+        		timeout = timeval;
+        	}
+        	break;
+        }
+        default:
+            fprintf(stderr, "Usage: %s -t <Path to topology file> -i <Routing Update Interval>\
+            	\n", argv[0]);
+            exit(EXIT_FAILURE);
+        }
+
+    }
+
+    /** Ref:
+     * http://stackoverflow.com/questions/18079340/using-getopt-in-c-with-non-option-arguments
+     */
+    if (argv[optind] == NULL || argv[optind + 1] == NULL) {
+    	fprintf(stderr, "Usage: %s -t <Path to topology file> -i <Routing Update Interval>\
+    		\n", argv[0]);
+    	exit(1);
+    }
+	
+    /******* Start Run Loop *********/
+    start_run_loop(top_file_path, timeout);
+
+	return 0;	
 }

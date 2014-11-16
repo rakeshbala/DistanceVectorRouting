@@ -8,7 +8,7 @@ OBJ_PATH  = $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(OBJ_FILES))
 
 LIBS	= 
 CC	= gcc
-CFLAGS	= -g -I$(INC_DIR)
+CFLAGS	= -std=gnu99 -g -I$(INC_DIR)
 
 all: assignment3
 
