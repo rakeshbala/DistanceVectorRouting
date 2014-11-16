@@ -1,7 +1,7 @@
 CSE 589 MNC PA3 Design
 Rakesh Balasubramanian
 
-The overall workflow of the program looks like below:
+The overall flow of the program looks like below:
     * Validate arguments
     * Look for topology file
     * Get server id and port 
@@ -14,9 +14,7 @@ The overall workflow of the program looks like below:
        * Receive distance vectors from neighbors and update the distance vectors
     
 
-/**************************************
-Data structure for routing Table Entry
-**************************************/
+/******* Data structure for routing Table Entry *******/
 typedef struct
 {
     int server_id;
@@ -25,9 +23,7 @@ typedef struct
 } RoutingTableEntry;
 
 
-/*************************************
-Data structure for update field entry
-*************************************/
+/******* Data structures for update field packet *******/
 typedef struct
 {
     uint32_t upe_server_ip_addr;
@@ -35,9 +31,6 @@ typedef struct
     uint16_t upe_server_id;
 } Up_field_entry;
 
-/**************************************
-Data structure for update field packet
-**************************************/
 typedef struct
 {
     uint16_t  num_updates;
@@ -46,9 +39,7 @@ typedef struct
 } UpdateFieldPacket;
 
 
-/************************************/
- Main select loop --start 
-*************************************/
+/******* Main select loop *******/
 WHILE(true)
     Set ReadFD for STDIN
     Set ReadFD for listening socket
@@ -76,15 +67,9 @@ END
 UPDATE_ROUTING_TABLE_FROM_PKT()
     BELLMAN_FORD();
 END
-/************************************/
- Main select loop --end 
-*************************************/
 
 
-
-/****************************************/
-Timer implementation using select --start
-*****************************************/
+/******* Timer implementation using select *******/
 while(true)
     x <- select( … ,TIMEOUT)
     if (TIMEOUT HAPPENED) //x=0
@@ -97,6 +82,3 @@ while(true)
         end for 
     end if
 end while
-/****************************************/
-Timer implementation using select --end
-*****************************************/

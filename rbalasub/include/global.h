@@ -2,6 +2,7 @@
 #define GLOBAL_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #define HOSTNAME_LEN 128
 
@@ -10,6 +11,7 @@ typedef struct node{
 	int server_id;
 	int port;
 	bool neighbour;
+	bool next_hop_server_id;
 	char *ip_addr;
 }Node;
 
@@ -23,5 +25,7 @@ typedef struct env_{
 
 
 extern Environment environment;
+extern int self_port;
+extern int self_id;
 
 #endif

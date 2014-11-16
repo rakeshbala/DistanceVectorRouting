@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     if (argv[optind] == NULL || argv[optind + 1] == NULL) {
     	fprintf(stderr, "Usage: %s -t <Path to topology file> -i <Routing Update Interval>\
     		\n", argv[0]);
-    	exit(1);
+    	exit(EXIT_FAILURE);
     }
 	
     /******* Start Run Loop *********/
