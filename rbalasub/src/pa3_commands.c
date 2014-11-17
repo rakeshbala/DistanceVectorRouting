@@ -7,16 +7,26 @@
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
+#include <arpa/inet.h>
+#include <errno.h>
 
 uint16_t self_id;
 uint16_t self_port;
 uint32_t self_ip;
 
+typedef enum {
+    IP,
+    SID,
+} GET_TYPE;
+
 void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
 void display_rt();
 int node_cmp(const void * n1, const void * n2);
-void dump_packet();
+bool dump_packet(char **error_string);
+int get_node(uint32_t sid_or_ip, GET_TYPE type);
+void read_pkt_update(char *pkt);
+
 
 
 /**
@@ -116,12 +126,13 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         error_string = (char *)"To do"; 
     }else if (strcasecmp("crash",argv[0])==0)
     {
-        error_flag = true;
-        error_string = (char *)"To do"; 
+        cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
+        while(1){};
+        
     }else if (strcasecmp("dump",argv[0])==0)
     {
         cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
-        dump_packet(); 
+        error_flag = !dump_packet(&error_string); 
     }else if (strcasecmp("exit",argv[0])==0)
     {
         exit(EXIT_SUCCESS);
@@ -138,26 +149,107 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
 
 }
 
+ /**
+  * Read packet and update routing table
+  * @param pkt update packet
+  */
+void read_pkt_update(char *pkt)
+{
+    
+    uint16_t s_port;
+    uint32_t s_ip;
+
+    /******* Get source id and port *********/
+    memcpy(&s_port, pkt+2, 2);
+    memcpy(&s_ip, pkt+4, 4);
+    
+    Node source_node = environment.nodes[get_node(s_ip,IP)];
+    pkt = pkt+8;//move to the entries
+    for (int i = 0; i < environment.num_servers; ++i)
+    {
+        uint16_t server_id;
+        memcpy(&server_id, pkt+(i*12)+8, 2);
+        uint16_t serv_cost;
+        memcpy(&serv_cost, pkt+(i*12)+10, 2);
+        Node compare_node = environment.nodes[get_node(server_id,SID)];
+
+        uint16_t new_cost = source_node.cost+ serv_cost;
+        /******* Bellman - Ford *********/
+        compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;  
+    }
+}
+
+
+/**
+ * Get node from server_id or ip address
+ * @param  server_id server_id of the node
+ * @return           the index of node in enviornment.nodes[]
+ */
+int get_node(uint32_t sid_or_ip, GET_TYPE type)
+{
+
+    for (int j = 0; j < environment.num_servers; ++j)
+    {
+        uint32_t compare_val = (type == SID)?
+                    environment.nodes[j].server_id:
+                    environment.nodes[j].ip_addr_bin;
+        if (sid_or_ip == compare_val)    
+        {
+            return j;
+        }
+    }
+    return INT_MAX;
+}
 /**
  * Create and dump the packet to binary
  */
-void dump_packet(){
+bool dump_packet(char **error_string){
 
+    /******* Calculate size of the packet *********/
     size_t pkt_size = 8 + 12*environment.num_servers;
     char *packet = (char *)calloc(1,8 + 12*environment.num_servers);
-    memcpy(packet, &(environment.num_servers), 2);
-    memcpy(packet+2, &(self_port), 2);
+
+    /******* Covert to network byte order  *********/
+
+    /******* Copy number of servers *********/
+    uint16_t pkt_num_serv = htons(environment.num_servers);
+    memcpy(packet, &(pkt_num_serv), 2);
+
+    /******* Copy own server id *********/
+    uint16_t pkt_self_id = htons(self_port);
+    memcpy(packet+2, &(pkt_self_id), 2);
+
+    /******* Copy each entry *********/
     memcpy(packet+4, &(self_ip), 4);
     for (int i = 0; i < environment.num_servers; ++i)
     {
+
+        /******* No need to convert to network byte order. Already done by inet_pton *********/
+        /******* Copy node ip address *********/
         memcpy(packet+8+(i*12), &(environment.nodes[i].ip_addr_bin), 4);
-        memcpy(packet+12+(i*12), &(environment.nodes[i].port), 2);
-        memcpy(packet+16+(i*12), &(environment.nodes[i].server_id), 2);
-        memcpy(packet+18+(i*12), &(environment.nodes[i].cost), 2);
+        
+        /******* Copy node port *********/
+        uint16_t pkt_node_port = htons(environment.nodes[i].port);
+        memcpy(packet+12+(i*12), &(pkt_node_port), 2);
+
+        /******* Copy node server id *********/
+        uint16_t pkt_node_sid = htons(environment.nodes[i].server_id);
+        memcpy(packet+16+(i*12), &(pkt_node_sid), 2);
+
+        /******* Copy link cost *********/
+        uint16_t pkt_node_cost = htons(environment.nodes[i].cost);
+        memcpy(packet+18+(i*12), &(pkt_node_cost), 2);
     }
 
-    cse4589_dump_packet(packet, pkt_size);
+   int status =  cse4589_dump_packet(packet, pkt_size);
+   if (status < 0)
+   {
+       *error_string = (char *)"Failed to write file";
+       return false;
+   }
 
+   read_pkt_update(packet);
+   return true;
 
 }
 

@@ -5,12 +5,12 @@ The overall flow of the program looks like below:
     * Validate arguments
     * Look for topology file
     * Get server id and port 
-    * Get neighbours and cost to neighbours from topology file
+    * Get neighbours and set cost to all nodes from topology file
     * Run main select loop
        * Handle user commands
        * Wait for update interval and send distance vectors to neighbors
        * or 
-       * Send distance vectors if command received before interval
+       * Send distance vectors if 'step' command received 
        * Receive distance vectors from neighbors and update the distance vectors
     
 
@@ -46,9 +46,13 @@ WHILE(true)
     Set timeout value
     res = SELECT(fd_max+1,Readfd,NULL,TIMEOUT);
     if res >= 0
+        if  res = 0
+            HANDLE_TIMEOUT();
+            continue;
+        end if
         for i = 1 to fd_max
             if(FD_ISSET(ii,&Readfd))
-                if ii=0
+                if i=0
                     READ_FROM_STDIN();
                 else 
                     READ_FROM_SOCKET();
@@ -58,7 +62,7 @@ WHILE(true)
     end if
 end while
 
-READ_FROM_SOCKET(i)
+READ_FROM_SOCKET()
     CHECK_IP_ADDR_OF_DEST(); 
     DISPLAY_UPDATE_FIELD_PACKET()
     UPDATE_ROUTING_TABLE_FROM_PKT();
@@ -71,11 +75,12 @@ END
 
 /******* Timer implementation using select *******/
 while(true)
+    set timeout
     x <- select( … ,TIMEOUT)
     if (TIMEOUT HAPPENED) //x=0
         for each item in time_arr[]
-            timeout_count ++ ;
-            if item_timeout_count > 3
+            item_timeout_count ++ ;
+            if item_timeout_count >= 3
                 set item_cost to inf;
                 remove item from array;  
             end if

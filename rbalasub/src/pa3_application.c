@@ -79,7 +79,7 @@ void setupEvironment(int index , char *line)
 			node.server_id = atoi(split_array[0]);
 			struct in_addr ipaddress;
 			node.ip_addr = strdup(split_array[1]);
-			inet_pton(AF_UNSPEC, split_array[1], &ipaddress);
+			inet_pton(AF_INET, split_array[1], &ipaddress);
 			node.ip_addr_bin = ipaddress.s_addr;
 			node.port = (uint16_t)strtoul(split_array[2],NULL,0);
 			node.neighbour = false;
