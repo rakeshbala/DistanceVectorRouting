@@ -14,8 +14,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-int self_port;
-int self_id;
+uint16_t self_port;
+uint16_t self_id;
 
 /**
  * Start listening for UDP packets and multiplex with

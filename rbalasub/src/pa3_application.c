@@ -6,11 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <arpa/inet.h>
 
 /******* Globals *********/
 Environment environment;
-int self_port=0;
-int self_id=0;
+uint16_t self_port=0;
+uint16_t self_id=0;
 
 void setupEvironment(int index, char * line);
 /**
@@ -34,6 +35,7 @@ void start_run_loop(char *top_file_path, float timeout)
 			setupEvironment(index,line);
 			index++;
 		}
+
 		free(line);
 		fclose(topology_file);
 	}else{
@@ -44,6 +46,7 @@ void start_run_loop(char *top_file_path, float timeout)
 
 	//Start listening to updates
 	start_listening(timeout);
+
 }
 
 
@@ -73,12 +76,17 @@ void setupEvironment(int index , char *line)
 			}
 			Node node;
 			node.server_id = atoi(split_array[0]);
-			node.ip_addr = split_array[1];
-			node.port = atoi(split_array[2]);
+			struct in_addr ipaddress;
+			node.ip_addr = strdup(split_array[1]);
+			inet_pton(AF_UNSPEC, split_array[1], &ipaddress);
+			node.ip_addr_bin = ipaddress.s_addr;
+			node.port = (uint16_t)strtoul(split_array[2],NULL,0);
 			node.neighbour = false;
-			node.cost = UINT_MAX;
+			node.cost = USHRT_MAX;
 			node.next_hop_server_id = -1;
 			environment.nodes[index-2] = node;
+			free(split_array);
+
 		}else if (index < 1+environment.num_servers+environment.num_neighbours){
 
 			/******* Tokenize line *********/

@@ -3,17 +3,19 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define HOSTNAME_LEN 128
 
 typedef struct node{
-	unsigned int cost;
-	int server_id;
-	int port;
+	uint16_t cost;
+	uint16_t server_id;
+	uint16_t port;
 	bool neighbour;
-	bool next_hop_server_id;
+	uint16_t next_hop_server_id;
+	uint32_t ip_addr_bin;
 	char *ip_addr;
-}Node;
+} Node;
 
 typedef struct env_{
 	int num_servers;
@@ -25,7 +27,7 @@ typedef struct env_{
 
 
 extern Environment environment;
-extern int self_port;
-extern int self_id;
+extern uint16_t self_port;
+extern uint16_t self_id;
 
 #endif
