@@ -12,6 +12,7 @@
 Environment environment;
 uint16_t self_port=0;
 uint16_t self_id=0;
+uint32_t self_ip=0;
 
 void setupEvironment(int index, char * line);
 /**
@@ -108,6 +109,7 @@ void setupEvironment(int index , char *line)
 				/******* Set self cost and self_port *********/
 				if (environment.nodes[i].server_id == self_id){
 					self_port = environment.nodes[i].port;
+					self_ip = environment.nodes[i].ip_addr_bin;
 					environment.nodes[i].cost = 0;
 					environment.nodes[i].next_hop_server_id = self_id;
 				}else if(environment.nodes[i].server_id == split_array[1]){ 
