@@ -162,15 +162,23 @@ void read_pkt_update(char *pkt)
     /******* Get source id and port *********/
     memcpy(&s_port, pkt+2, 2);
     memcpy(&s_ip, pkt+4, 4);
-    
     Node source_node = environment.nodes[get_node(s_ip,IP)];
+    printf("Server ip %s\n", source_node.ip_addr);
+    printf("Server port %d\n", s_port);
+
     pkt = pkt+8;//move to the entries
     for (int i = 0; i < environment.num_servers; ++i)
     {
         uint16_t server_id;
         memcpy(&server_id, pkt+(i*12)+8, 2);
+        server_id = ntohs(server_id);
+        printf("Server id %d\n", server_id);
+
         uint16_t serv_cost;
         memcpy(&serv_cost, pkt+(i*12)+10, 2);
+        serv_cost = ntohs(serv_cost);
+        printf("Server cost %d\n", serv_cost);
+
         Node compare_node = environment.nodes[get_node(server_id,SID)];
 
         uint16_t new_cost = source_node.cost+ serv_cost;

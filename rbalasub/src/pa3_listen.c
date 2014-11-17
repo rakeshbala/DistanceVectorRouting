@@ -71,7 +71,14 @@ void start_listening(float timeout){
             close(listening_socket);
             continue;
         }
+
+        char ip_str[INET_ADDRSTRLEN];
+        struct sockaddr_in *dest_sock_addr = (struct sockaddr_in *)working_ai->ai_addr;
+        void * temp_addr = &(dest_sock_addr->sin_addr);
+        inet_ntop(AF_INET, &temp_addr, ip_str, sizeof ip_str);
+        printf("Listening at : %s\n",ip_str);
         break;
+
     }
 
     /******* If something went wrong  *********/
