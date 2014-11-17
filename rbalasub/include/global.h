@@ -12,7 +12,7 @@ typedef struct node{
 	uint16_t server_id;
 	uint16_t port;
 	bool neighbour;
-	uint16_t next_hop_server_id;
+	int16_t next_hop_server_id; 
 	uint32_t ip_addr_bin;
 	char *ip_addr;
 } Node;

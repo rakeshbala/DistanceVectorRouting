@@ -87,7 +87,7 @@ void setupEvironment(int index , char *line)
 			environment.nodes[index-2] = node;
 			free(split_array);
 
-		}else if (index < 1+environment.num_servers+environment.num_neighbours){
+		}else if (index <= 1+environment.num_servers+environment.num_neighbours){
 
 			/******* Tokenize line *********/
 			char *split;
@@ -114,7 +114,7 @@ void setupEvironment(int index , char *line)
 					/******* Set state of neighbours *********/
 					environment.nodes[i].cost = split_array[2];
 					environment.nodes[i].neighbour = true;
-					environment.nodes[i].next_hop_server_id = self_id;
+					environment.nodes[i].next_hop_server_id = environment.nodes[i].server_id;
 				}
 			}
 

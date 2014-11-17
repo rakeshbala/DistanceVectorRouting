@@ -11,8 +11,10 @@
 uint16_t self_id;
 uint16_t self_port;
 
-void processCommandArray(int argc, char **argv);
+void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
+void display_rt();
+int node_cmp(const void * n1, const void * n2);
 /**
  * Handle User Commands to application
  * @param command_string raw string supplied to stdin
@@ -43,7 +45,7 @@ void handle_commands(char * command_string){
         /******* Send tokenized commands for processing *********/
         if (!(argc==0))
         {
-            processCommandArray(argc, argv);
+            processCommands(argc, argv);
             /******* Free the commands array *********/
             int ii =0;
             for (ii = 0; ii < argc; ++ii)
@@ -59,7 +61,7 @@ void handle_commands(char * command_string){
  * @param argc Number of arguments
  * @param argv The argument array
  */
-void processCommandArray(int argc, char **argv){
+void processCommands(int argc, char **argv){
 
     bool error_flag=false;
     char *command_string = argv[0];
@@ -67,6 +69,9 @@ void processCommandArray(int argc, char **argv){
 
 	if (strcasecmp("academic_integrity",argv[0])==0)
 	{	
+
+        cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
+
 		printf("\n");
 		cse4589_print_and_log((char *)"I have read and understood the course academic integrity policy \
 located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index.html#integrity");
@@ -80,7 +85,8 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
             error_flag = true;
             error_string = (char *)"Invalid number of arguments";
         }else{
-            error_flag = update_cost(
+            cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
+            error_flag = !update_cost(
                 (uint16_t)strtoul(argv[1],NULL,0), 
                 (uint16_t)strtoul(argv[2],NULL,0), 
                 argv[3],
@@ -89,22 +95,29 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
              
     }else if (strcasecmp("step",argv[0])==0)
     {
-        
+        error_flag = true;
+        error_string = (char *)"To do";   
     }else if (strcasecmp("packets",argv[0])==0)
     {
-        
+        error_flag = true;
+        error_string = (char *)"To do"; 
     }else if (strcasecmp("display",argv[0])==0)
     {
+        cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
+        display_rt(); 
         
     }else if (strcasecmp("disable",argv[0])==0)
     {
-        
+        error_flag = true;
+        error_string = (char *)"To do"; 
     }else if (strcasecmp("crash",argv[0])==0)
     {
-        
+        error_flag = true;
+        error_string = (char *)"To do"; 
     }else if (strcasecmp("dump",argv[0])==0)
     {
-        
+        error_flag = true;
+        error_string = (char *)"To do"; 
     }else if (strcasecmp("exit",argv[0])==0)
     {
         exit(EXIT_SUCCESS);
@@ -114,11 +127,9 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
 
     }
 
-    if (error_flag == false)
+    if (error_flag)
     {
         cse4589_print_and_log((char *)"%s:%s\n",command_string,error_string);        
-    }else{
-        cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
     }
 
 }
@@ -145,6 +156,7 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
                 if ( strcasecmp("inf",cost) == 0 )
                 {
                     environment.nodes[i].cost = USHRT_MAX;
+                    environment.nodes[i].next_hop_server_id = -1;
                 }else if(strtol(cost, NULL, 0) > 0 ){
                     uint16_t cost_int = (uint16_t)strtoul(cost, NULL, 0);
                     environment.nodes[i].cost = cost_int;
@@ -158,4 +170,33 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
         *error_string = (char *)"Invalid server_id 2";
         return false;
     }
+}
+
+/**
+ * Display the routing table
+ */
+void display_rt(){
+
+    /******* Sort the nodes *********/
+    qsort( environment.nodes, environment.num_servers, sizeof(Node), node_cmp);
+
+    for (int i = 0; i < environment.num_servers ; ++i)
+    {
+        Node node= environment.nodes[i];
+        cse4589_print_and_log((char *)"%-15d%-15d%-15d\n", 
+            node.server_id,node.next_hop_server_id,node.cost); 
+    }
+
+}
+
+/**
+ * Comparator function for sorting array
+ * @param  n1 node 1
+ * @param  n2 node 2
+ * @return    result
+ */
+int node_cmp(const void * n1, const void * n2){
+    Node *n1_s = (Node *)n1;
+    Node *n2_s = (Node *)n2;
+    return n1_s->server_id - n2_s->server_id;
 }
