@@ -1,6 +1,7 @@
 #include "../include/pa3_commands.h"
 #include "../include/global.h"
 #include "../include/logger.h"
+#include "../include/pa3_network.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +27,8 @@ int node_cmp(const void * n1, const void * n2);
 bool dump_packet(char **error_string);
 int get_node(uint32_t sid_or_ip, GET_TYPE type);
 void read_pkt_update(char *pkt);
+bool disable_link(int server_id, char **error_string);
+bool is_number ( char * string) ;
 
 // #define NDEBUG
 #ifdef NDEBUG
@@ -105,12 +108,15 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
             error_flag = true;
             error_string = (char *)"Invalid number of arguments";
         }else{
-            cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
             error_flag = !update_cost(
                 (uint16_t)strtoul(argv[1],NULL,0), 
                 (uint16_t)strtoul(argv[2],NULL,0), 
                 argv[3],
                 &error_string);
+            if (error_flag == false)
+            {
+                cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);          
+            } 
         }
              
     }else if (strcasecmp("step",argv[0])==0)
@@ -128,8 +134,27 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         
     }else if (strcasecmp("disable",argv[0])==0)
     {
-        error_flag = true;
-        error_string = (char *)"To do"; 
+        if (argc!=2)
+        {
+            error_string = (char *)"Invalid number of arguments";
+            error_flag = true;
+        }else{
+
+            char *endPtr;
+            uint16_t server_id = strtoul(argv[1],&endPtr,0);
+            if (strcmp(endPtr,"")){
+                error_string = (char *)"Invalid server id";
+                error_flag = true;
+            }else{
+                error_flag = !disable_link(server_id, &error_string); 
+                if (error_flag == false)
+                {
+                    cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);          
+                }
+            }
+
+        }
+
     }else if (strcasecmp("crash",argv[0])==0)
     {
         cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
@@ -137,21 +162,52 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         
     }else if (strcasecmp("dump",argv[0])==0)
     {
-        cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
-        error_flag = !dump_packet(&error_string); 
+        error_flag = !dump_packet(&error_string);
+        if (error_flag == false)
+        {
+            cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);          
+        } 
     }else if (strcasecmp("exit",argv[0])==0)
     {
         exit(EXIT_SUCCESS);
-    }else{
+    }else
+    {
         error_flag = true;
         error_string = (char *)"Unknown command";
-
     }
+
 
     if (error_flag)
     {
         cse4589_print_and_log((char *)"%s:%s\n",command_string,error_string);        
     }
+
+}
+
+/**
+ * Disable the link to ther server_id
+ * @param server_id [description]
+ */
+bool disable_link(int server_id, char **error_string)
+{   
+    int index = get_node(server_id, SID);
+    if (index > environment.num_servers)
+    {
+        *error_string = (char *)"Invalid server id";
+        return false;
+    }
+    Node node = environment.nodes[index];
+    if (node.neighbour == false)
+    {
+        *error_string = (char *)"Server not a neighbour";
+        return false;
+    }
+
+    node.enabled = false;
+    node.cost = USHRT_MAX;
+    node.next_hop_server_id = -1;
+    environment.nodes[index] = node;
+    return true;
 
 }
 
@@ -170,35 +226,42 @@ void read_pkt_update(char *pkt)
     s_port = ntohs(s_port);
     memcpy(&s_ip, pkt+4, 4);
     Node source_node = environment.nodes[get_node(s_ip,IP)];
-    debug("Server ip %s\n", source_node.ip_addr);
-    debug("Server port %d\n", s_port);
 
+    /******* Don't respond to disabled links *********/
+    if (source_node.enabled == false){
+        return;
+    }
+
+    cse4589_print_and_log((char *)"RECEIVED A MESSAGE FROM SERVER %d\n",source_node.server_id);
     pkt = pkt+8;//move to the entries
     for (int i = 0; i < environment.num_servers; ++i)
     {
+        /******* Server Id *********/
         uint16_t server_id;
         memcpy(&server_id, pkt+(i*12)+8, 2);
         server_id = ntohs(server_id);
-        debug("Server id %d\n", server_id);
 
+        /******* Cost to node *********/
         uint16_t serv_cost;
         memcpy(&serv_cost, pkt+(i*12)+10, 2);
         serv_cost = ntohs(serv_cost);
-        debug("Server cost %d\n", serv_cost);
-
-        Node compare_node = environment.nodes[get_node(server_id,SID)];
+        cse4589_print_and_log((char *)"%-15d%-15d\n", server_id, serv_cost);
+        int compare_index = get_node(server_id,SID);
+        Node compare_node = environment.nodes[compare_index];
 
         uint16_t new_cost = source_node.cost+ serv_cost;
         /******* Bellman - Ford *********/
-        compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;  
+        compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
+        environment.nodes[compare_index] = compare_node;
     }
+
 }
 
 
 /**
  * Get node from server_id or ip address
  * @param  server_id server_id of the node
- * @return           the index of node in enviornment.nodes[]
+ * @return the index of node in enviornment.nodes[]
  */
 int get_node(uint32_t sid_or_ip, GET_TYPE type)
 {
@@ -220,50 +283,17 @@ int get_node(uint32_t sid_or_ip, GET_TYPE type)
  */
 bool dump_packet(char **error_string){
 
-    /******* Calculate size of the packet *********/
+    void *packet = make_pkt();
     size_t pkt_size = 8 + 12*environment.num_servers;
-    char *packet = (char *)calloc(1,8 + 12*environment.num_servers);
 
-    /******* Covert to network byte order  *********/
-
-    /******* Copy number of servers *********/
-    uint16_t pkt_num_serv = htons(environment.num_servers);
-    memcpy(packet, &(pkt_num_serv), 2);
-
-    /******* Copy own server id *********/
-    uint16_t pkt_self_id = htons(self_port);
-    memcpy(packet+2, &(pkt_self_id), 2);
-
-    /******* Copy each entry *********/
-    memcpy(packet+4, &(self_ip), 4);
-    for (int i = 0; i < environment.num_servers; ++i)
-    {
-
-        /******* No need to convert to network byte order. Already done by inet_pton *********/
-        /******* Copy node ip address *********/
-        memcpy(packet+8+(i*12), &(environment.nodes[i].ip_addr_bin), 4);
-        
-        /******* Copy node port *********/
-        uint16_t pkt_node_port = htons(environment.nodes[i].port);
-        memcpy(packet+12+(i*12), &(pkt_node_port), 2);
-
-        /******* Copy node server id *********/
-        uint16_t pkt_node_sid = htons(environment.nodes[i].server_id);
-        memcpy(packet+16+(i*12), &(pkt_node_sid), 2);
-
-        /******* Copy link cost *********/
-        uint16_t pkt_node_cost = htons(environment.nodes[i].cost);
-        memcpy(packet+18+(i*12), &(pkt_node_cost), 2);
-    }
-
-   int status =  cse4589_dump_packet(packet, pkt_size);
+   int status =  cse4589_dump_packet(packet, pkt_size); 
    if (status < 0)
    {
        *error_string = (char *)"Failed to write file";
        return false;
    }
 
-   read_pkt_update(packet);
+   // read_pkt_update(packet); //For testing
    return true;
 
 }
@@ -322,13 +352,16 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
                 {
                     environment.nodes[i].cost = USHRT_MAX;
                     environment.nodes[i].next_hop_server_id = -1;
-                }else if(strtol(cost, NULL, 0) > 0 ){
-                    uint16_t cost_int = (uint16_t)strtoul(cost, NULL, 0);
-                    environment.nodes[i].cost = cost_int;
                 }else{
-                    *error_string = (char *)"Invalid cost";
-                    return false;
-                }
+
+                    if(is_number(cost) == true){
+                        uint16_t cost_int = (uint16_t)strtoul(cost, NULL, 0);
+                        environment.nodes[i].cost = cost_int;
+                    }else{
+                        *error_string = (char *)"Invalid cost";
+                        return false;
+                    }
+                } 
                 return true;
             }
         }
@@ -338,4 +371,19 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
 }
 
 
+/**
+ * Checks if string is Number
+ * @param  string [description]
+ * @return        [description]
+ */
+bool is_number ( char * string) 
+{
+    char *endPtr;
+    strtoul(string,&endPtr,0);
+    if (strcmp(endPtr,"")){
+        return  true;
+    }else{
+        return false;
+    }
+}
 

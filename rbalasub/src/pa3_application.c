@@ -90,6 +90,8 @@ void setupEvironment(int index , char *line)
 			node.neighbour = false;
 			node.cost = USHRT_MAX;
 			node.next_hop_server_id = -1;
+			node.enabled = true;
+			node.socket = INT_MAX;
 			environment.nodes[index-2] = node;
 			free(split_array);
 

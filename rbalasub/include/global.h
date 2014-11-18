@@ -15,6 +15,8 @@ typedef struct node{
 	int16_t next_hop_server_id; 
 	uint32_t ip_addr_bin;
 	char *ip_addr;
+	bool enabled;
+	int socket;
 } Node;
 
 typedef struct env_{

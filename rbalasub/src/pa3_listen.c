@@ -1,6 +1,7 @@
 #include "../include/pa3_listen.h"
 #include "../include/global.h"
 #include "../include/pa3_commands.h"
+#include "../include/pa3_network.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -36,7 +37,6 @@ void start_listening(float timeout){
 	FD_ZERO(&master);
     FD_ZERO(&read_fds);
 
-    /******* Get i/p for socket creation *********/
     memset(&hints,0,sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
@@ -105,6 +105,7 @@ void start_listening(float timeout){
     printf("[PA3]> ");
     /******* Main listening loop *********/
     while(true){
+
 		read_fds = master; //going to select();
 		fflush(stdout);
 		struct timeval tv;
@@ -118,6 +119,8 @@ void start_listening(float timeout){
 		}else if(res == 0){
 
 			printf("Timeout\n");
+            broadcast_packet();
+            
 		}
 
 		for (int i = 0; i <= fd_max; i++){
@@ -134,5 +137,8 @@ void start_listening(float timeout){
 				}
 			}
 		}
+
+
+
 	}
 }
