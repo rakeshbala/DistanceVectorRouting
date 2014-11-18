@@ -27,7 +27,13 @@ bool dump_packet(char **error_string);
 int get_node(uint32_t sid_or_ip, GET_TYPE type);
 void read_pkt_update(char *pkt);
 
-
+// #define NDEBUG
+#ifdef NDEBUG
+#define debug(M, ...)
+#else
+#define debug(M, ...) fprintf(stderr, " " M "", ##__VA_ARGS__)
+// #define debug(M, ...) fprintf(stderr, "DEBUG %s:%s:%d: " M "\n", __FILE__,__func__, __LINE__, ##__VA_ARGS__)
+#endif
 
 /**
  * Handle User Commands to application
@@ -161,10 +167,11 @@ void read_pkt_update(char *pkt)
 
     /******* Get source id and port *********/
     memcpy(&s_port, pkt+2, 2);
+    s_port = ntohs(s_port);
     memcpy(&s_ip, pkt+4, 4);
     Node source_node = environment.nodes[get_node(s_ip,IP)];
-    printf("Server ip %s\n", source_node.ip_addr);
-    printf("Server port %d\n", s_port);
+    debug("Server ip %s\n", source_node.ip_addr);
+    debug("Server port %d\n", s_port);
 
     pkt = pkt+8;//move to the entries
     for (int i = 0; i < environment.num_servers; ++i)
@@ -172,12 +179,12 @@ void read_pkt_update(char *pkt)
         uint16_t server_id;
         memcpy(&server_id, pkt+(i*12)+8, 2);
         server_id = ntohs(server_id);
-        printf("Server id %d\n", server_id);
+        debug("Server id %d\n", server_id);
 
         uint16_t serv_cost;
         memcpy(&serv_cost, pkt+(i*12)+10, 2);
         serv_cost = ntohs(serv_cost);
-        printf("Server cost %d\n", serv_cost);
+        debug("Server cost %d\n", serv_cost);
 
         Node compare_node = environment.nodes[get_node(server_id,SID)];
 

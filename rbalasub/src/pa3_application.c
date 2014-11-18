@@ -13,6 +13,7 @@ Environment environment;
 uint16_t self_port=0;
 uint16_t self_id=0;
 uint32_t self_ip=0;
+char * self_ip_str;
 
 void setupEvironment(int index, char * line);
 /**
@@ -59,6 +60,10 @@ void start_run_loop(char *top_file_path, float timeout)
  */
 void setupEvironment(int index , char *line)
 {	
+	if (strlen(line)<=1)
+	{
+		return;
+	}
 	if(index == 0){
 		environment.num_servers = atoi(line);
 	}else if(index == 1){
@@ -106,17 +111,22 @@ void setupEvironment(int index , char *line)
 			}
 			for (int i = 0; i < environment.num_servers; ++i)
 			{
+				Node node = environment.nodes[i];
 				/******* Set self cost and self_port *********/
-				if (environment.nodes[i].server_id == self_id){
-					self_port = environment.nodes[i].port;
-					self_ip = environment.nodes[i].ip_addr_bin;
-					environment.nodes[i].cost = 0;
-					environment.nodes[i].next_hop_server_id = self_id;
-				}else if(environment.nodes[i].server_id == split_array[1]){ 
+				if (node.server_id == self_id){
+					self_port = node.port;
+					self_ip = node.ip_addr_bin;
+					self_ip_str = node.ip_addr;
+					node.cost = 0;
+					node.next_hop_server_id = self_id;
+					environment.nodes[i] = node;
+				}else if(node.server_id == split_array[1]){ 
 					/******* Set state of neighbours *********/
-					environment.nodes[i].cost = split_array[2];
-					environment.nodes[i].neighbour = true;
-					environment.nodes[i].next_hop_server_id = environment.nodes[i].server_id;
+					node.cost = split_array[2];
+					node.neighbour = true;
+					node.next_hop_server_id = node.server_id;
+					environment.nodes[i] = node;
+
 				}
 			}
 

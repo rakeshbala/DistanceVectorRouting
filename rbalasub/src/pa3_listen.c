@@ -16,7 +16,7 @@
 
 uint16_t self_port;
 uint16_t self_id;
-
+char *self_ip_str;
 /**
  * Start listening for UDP packets and multiplex with
  * stdin using select()
@@ -41,15 +41,15 @@ void start_listening(float timeout){
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE;
+
     char port[5];
     sprintf(port, "%d",self_port);
     /******* Get addrinfo *********/
-    if ((errorVar = getaddrinfo(NULL, port, &hints, &receive_ai))!=0)
+    if ((errorVar = getaddrinfo(self_ip_str, port, &hints, &receive_ai))!=0)
     {
         fprintf(stderr, "Get addr info: %s\n", gai_strerror(errorVar));
         exit(EXIT_FAILURE);
     }
-
 
     /******* Loop through addrinfos for binding a socket *********/
     for (working_ai = receive_ai; receive_ai!=NULL; receive_ai = receive_ai->ai_next)
@@ -68,15 +68,19 @@ void start_listening(float timeout){
         /******* Bind else use another socket *********/
         if (bind(listening_socket, working_ai->ai_addr, working_ai->ai_addrlen)<0)
         {
+            perror("bind");
             close(listening_socket);
             continue;
         }
-
-        char ip_str[INET_ADDRSTRLEN];
-        struct sockaddr_in *dest_sock_addr = (struct sockaddr_in *)working_ai->ai_addr;
-        void * temp_addr = &(dest_sock_addr->sin_addr);
-        inet_ntop(AF_INET, &temp_addr, ip_str, sizeof ip_str);
-        printf("Listening at : %s\n",ip_str);
+        if (working_ai != NULL)
+        {
+           // char ip_str[INET_ADDRSTRLEN];
+           // struct sockaddr_in *dest_sock_addr = (struct sockaddr_in *)working_ai->ai_addr;
+           // void * temp_addr = &(dest_sock_addr->sin_addr);
+           // inet_ntop(AF_INET, &temp_addr, ip_str, sizeof ip_str);
+           // printf("Listening at : %s\n",ip_str);
+        }
+ 
         break;
 
     }

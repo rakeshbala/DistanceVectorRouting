@@ -30,5 +30,6 @@ extern Environment environment;
 extern uint16_t self_port;
 extern uint16_t self_id;
 extern uint32_t self_ip;
+extern char * self_ip_str;
 
 #endif
