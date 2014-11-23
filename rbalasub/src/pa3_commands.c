@@ -271,6 +271,7 @@ uint16_t read_pkt_update(char *pkt)
         // } 
     }
     run_BF_with_server(source_node, source_cost,s_id_arr,s_cost_arr);
+    printf("[PA3]> ");
     return source_node.server_id;
 }
 

@@ -176,7 +176,6 @@ void start_listening(float timeout){
                             environment.nodes[index].reset_timeout = true;
                             environment.nodes[index].timeout_counter = 0;
                         }
-                        printf("[PA3]> ");
 
                     }
 
