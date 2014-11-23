@@ -276,6 +276,8 @@ uint16_t read_pkt_update(char *pkt)
 void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_arr[], uint16_t s_cost_arr[]) {
     /******* Set new cost to neighbour *********/
     source_node.cost = source_cost;
+    environment.nodes[get_node(source_node.server_id)] = source_node;
+    /******* Set cost to rest of the nodes in network *********/
     for (int i = 0; i < environment.num_servers; ++i)
     {
 
