@@ -164,6 +164,8 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
     }else if (strcasecmp("exit",argv[0])==0)
     {
         exit(EXIT_SUCCESS);
+    }else if(strcasecmp("myip", argv[0])==0){
+        printf("%d\n",self_port); 
     }else
     {
         error_flag = true;
