@@ -127,7 +127,8 @@ void start_listening(float timeout){
             tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
             for (int i = 0; i < environment.num_servers; ++i)
             {
-                if (environment.nodes[i].server_id == self_id)
+                if (environment.nodes[i].server_id == self_id 
+                    || environment.nodes[i].neighbour == false)
                 {
                     continue;
                 }
