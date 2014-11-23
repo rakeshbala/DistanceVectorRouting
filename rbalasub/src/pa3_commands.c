@@ -259,16 +259,7 @@ uint16_t read_pkt_update(char *pkt)
         if (server_id == self_id) //Path from neighbour to me
         {
             source_cost = serv_cost;
-        }
-        // int compare_index = get_node(server_id);
-        // Node compare_node = environment.nodes[compare_index];
-        // if (compare_node.server_id != self_id)
-        // {
-        //     uint16_t new_cost = source_node.cost+ serv_cost;
-        //     /******* Bellman - Ford *********/
-        //     compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
-        //     environment.nodes[compare_index] = compare_node;
-        // } 
+        } 
     }
     run_BF_with_server(source_node, source_cost,s_id_arr,s_cost_arr);
     printf("[PA3]> ");
@@ -304,7 +295,11 @@ void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_
                 new_cost = source_cost+ s_cost_arr[i];
             }
             /******* Bellman - Ford *********/
-            compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
+            if (new_cost<compare_node.cost)
+            {
+                compare_node.cost = new_cost;
+                compare_node.next_hop_server_id = source_node.server_id;
+            }
             environment.nodes[compare_index] = compare_node;
         } 
     }
