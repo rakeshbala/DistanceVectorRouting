@@ -295,7 +295,14 @@ void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_
         if (compare_node.server_id != self_id && 
             compare_node.server_id != source_node.server_id)
         {
-            uint16_t new_cost = source_cost+ s_cost_arr[i];
+            uint16_t new_cost;
+            /******* Check addition with inf value to avoid wrap around *********/
+            if (source_cost == USHRT_MAX || s_cost_arr[i] == USHRT_MAX)
+            {
+                new_cost = USHRT_MAX;
+            }else{
+                new_cost = source_cost+ s_cost_arr[i];
+            }
             /******* Bellman - Ford *********/
             compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
             environment.nodes[compare_index] = compare_node;
