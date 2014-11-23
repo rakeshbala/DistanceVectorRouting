@@ -275,8 +275,7 @@ uint16_t read_pkt_update(char *pkt)
  */
 void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_arr[], uint16_t s_cost_arr[]) {
     /******* Set new cost to neighbour *********/
-    source_node.cost = source_cost;
-    environment.nodes[get_node(source_node.server_id)] = source_node;
+    // source_node.cost = source_cost;
     /******* Set cost to rest of the nodes in network *********/
     for (int i = 0; i < environment.num_servers; ++i)
     {
@@ -284,13 +283,17 @@ void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_
         int pkt_sid = s_id_arr[i];
         int compare_index = get_node(pkt_sid);
         Node compare_node = environment.nodes[compare_index];
-        /******* Skip self and current neighbour *********/
-        if (compare_node.server_id != self_id && 
-            compare_node.server_id != source_node.server_id)
+        /******* Skip self *********/
+        if (compare_node.server_id != self_id )
         {
             uint16_t new_cost;
+            /******* Current neighbour *********/
+            if (compare_node.server_id == source_node.server_id)
+            {
+                new_cost = source_cost;
+            }
             /******* Check addition with inf value to avoid wrap around *********/
-            if (source_cost == USHRT_MAX || s_cost_arr[i] == USHRT_MAX)
+            else if(source_cost == USHRT_MAX || s_cost_arr[i] == USHRT_MAX)
             {
                 new_cost = USHRT_MAX;
             }else{
