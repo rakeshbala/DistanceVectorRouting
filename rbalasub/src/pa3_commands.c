@@ -116,8 +116,8 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
              
     }else if (strcasecmp("step",argv[0])==0)
     {
-        error_flag = true;
-        error_string = (char *)"To do";   
+        cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
+        broadcast_packet();        
     }else if (strcasecmp("packets",argv[0])==0)
     {
         cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
