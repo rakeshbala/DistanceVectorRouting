@@ -64,7 +64,7 @@ void broadcast_packet(){
 	}//main for
 }
 
-void *make_pkt(){
+void * make_pkt(){
 	/******* Calculate size of the packet *********/
     size_t pkt_size = 8 + 12*environment.num_servers;
     char *packet = (char *)calloc(1,pkt_size);

@@ -133,6 +133,7 @@ void start_listening(float timeout){
 					handle_commands(commandString);
 					printf("[PA3]> ");
 				}else{
+                    printf("Something received\n");
 
 				}
 			}

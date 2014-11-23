@@ -17,9 +17,9 @@ The overall flow of the program looks like below:
 /******* Data structure for routing Table Entry *******/
 typedef struct
 {
-    int server_id;
+    uint16_t server_id;
     int next_hop_server_id;
-    int cost_ofpath;
+    uint16_t cost_ofpath;
 } RoutingTableEntry;
 
 
@@ -29,6 +29,7 @@ typedef struct
     uint32_t upe_server_ip_addr;
     uint16_t upe_server_port;
     uint16_t upe_server_id;
+    uint16_t cost;
 } Up_field_entry;
 
 typedef struct
@@ -74,16 +75,34 @@ END
 
 
 /******* Timer implementation using select *******/
+Design: 
+Keep track of the time out count and other details of each neighbour in a global struct array 
+Mark the neighbour for timeout-counter reset in the global array, each time a packet is received from the neighbour
+When a timeout happens, increment the timeout-counter of neighbours whose reset flag is not true
+If timeout-counter becomes more than three mark the cost to that server as inf.
+
+//Data structure used
+typedef struct{
+	uint16_t server_id;
+	bool reset;
+	int count;
+} Timeout;
+Timeout time_arr[]; 
+//Relevant parts of main select loop
 while(true)
-    set timeout
     x <- select( … ,TIMEOUT)
     if (TIMEOUT HAPPENED) //x=0
-        for each item in time_arr[]
-            item_timeout_count ++ ;
-            if item_timeout_count >= 3
-                set item_cost to inf;
-                remove item from array;  
+        for i : 1 to length of time_arr
+        	if time_arr[i].reset != true 	//Check if marked for reset
+            	time_arr[i].count++;		//Increment counter if not marked
+            	if time_arr[i] >= 3
+            		SET_COST_TO_INF(time_arr[i].server_id); //Set cost of server to inf if count > 3
+            	end if
             end if
-        end for 
+        end for
+    else if data received
+    	s_id = GET_SERVERID_FROM_DATA(); 
+    	ind = GET_INDEX_OF_TIMEOUT_FROM_SID(); //Get index of the server id in timeout array
+    	time_arr[ind].reset = true;
     end if
 end while
