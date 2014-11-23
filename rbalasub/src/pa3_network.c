@@ -60,7 +60,7 @@ void broadcast_packet(){
             	dest_addr_info->ai_addr, dest_addr_info->ai_addrlen)) == -1) {
 		        perror("send: sendto");
 		    }
-		    break;
+		    
 		}//if
 	}//main for
 }
