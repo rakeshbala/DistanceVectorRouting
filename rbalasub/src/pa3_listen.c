@@ -120,15 +120,20 @@ void start_listening(float timeout){
 			perror("select");
 			exit(EXIT_FAILURE);
 		}else if(res == 0){
+			printf("\nPeriodic update..\n\n");
+            printf("[PA3]> ");
 
-			printf("Timeout happened\n");
             tv.tv_sec = (time_t)timeout;
             tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
             for (int i = 0; i < environment.num_servers; ++i)
             {
+                if (environment.nodes[i].server_id == self_id)
+                {
+                    continue;
+                }
                 if (environment.nodes[i].reset_timeout == false)
                 {
-                    environment.nodes[i].timeout_counter ++;
+                    environment.nodes[i].timeout_counter++;
                     if (environment.nodes[i].timeout_counter >=3)
                     {
                         environment.nodes[i].cost = USHRT_MAX;
@@ -137,6 +142,7 @@ void start_listening(float timeout){
                 }
             }
             broadcast_packet();
+
             
 		}
 
@@ -159,12 +165,14 @@ void start_listening(float timeout){
                         perror("recvfrom");
                     }else{
                         uint16_t server_id = read_pkt_update(pkt);
-                        int index = get_node(server_id,SID);
+                        int index = get_node(server_id);
                         if (index != INT_MAX)
                         {
                             environment.nodes[index].reset_timeout = true;
                             environment.nodes[index].timeout_counter = 0;
                         }
+                        printf("[PA3]> ");
+
                     }
 
 				}

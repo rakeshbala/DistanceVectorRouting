@@ -15,6 +15,7 @@ uint16_t self_id;
 uint16_t self_port;
 uint32_t self_ip;
 char *self_ip_str;
+int packet_count=0;
 
 void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
@@ -119,8 +120,9 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         error_string = (char *)"To do";   
     }else if (strcasecmp("packets",argv[0])==0)
     {
-        error_flag = true;
-        error_string = (char *)"To do"; 
+        cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
+        cse4589_print_and_log((char *)"%d\n", packet_count);
+        packet_count = 0; 
     }else if (strcasecmp("display",argv[0])==0)
     {
         cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
@@ -187,7 +189,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
  */
 bool disable_link(int server_id, char **error_string)
 {   
-    int index = get_node(server_id, SID);
+    int index = get_node(server_id);
     if (index > environment.num_servers)
     {
         *error_string = (char *)"Invalid server id";
@@ -222,12 +224,15 @@ uint16_t read_pkt_update(char *pkt)
     memcpy(&s_port, pkt+2, 2);
     s_port = ntohs(s_port);
     memcpy(&s_ip, pkt+4, 4);
-    Node source_node = environment.nodes[get_node(s_ip,IP)];
+    Node source_node = environment.nodes[get_node_from_ip_port(s_ip,s_port)];
 
     /******* Don't respond to disabled links *********/
     if (source_node.enabled == false){
         return USHRT_MAX;
     }
+
+    packet_count++;//increment packet count for 'packets' comand
+
     printf("\n");
     cse4589_print_and_log((char *)"RECEIVED A MESSAGE FROM SERVER %d\n",source_node.server_id);
     pkt = pkt+8;//move to the entries
@@ -243,13 +248,17 @@ uint16_t read_pkt_update(char *pkt)
         memcpy(&serv_cost, pkt+(i*12)+10, 2);
         serv_cost = ntohs(serv_cost);
         cse4589_print_and_log((char *)"%-15d%-15d\n", server_id, serv_cost);
-        int compare_index = get_node(server_id,SID);
+        int compare_index = get_node(server_id);
         Node compare_node = environment.nodes[compare_index];
+        if (compare_node.server_id != self_id)
+        {
+            uint16_t new_cost = source_node.cost+ serv_cost;
+            /******* Bellman - Ford *********/
+            compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
+            environment.nodes[compare_index] = compare_node;
+        }
 
-        uint16_t new_cost = source_node.cost+ serv_cost;
-        /******* Bellman - Ford *********/
-        compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
-        environment.nodes[compare_index] = compare_node;
+        
     }
 
     return source_node.server_id;
@@ -261,16 +270,26 @@ uint16_t read_pkt_update(char *pkt)
  * @param  server_id server_id of the node
  * @return the index of node in enviornment.nodes[]
  */
-int get_node(uint32_t sid_or_ip, GET_TYPE type)
+int get_node (uint16_t sid)
 {
 
     for (int j = 0; j < environment.num_servers; ++j)
     {
-        uint32_t compare_val = (type == SID)?
-                    environment.nodes[j].server_id:
-                    environment.nodes[j].ip_addr_bin;
-        if (sid_or_ip == compare_val)    
+        if (sid == environment.nodes[j].server_id)    
         {
+
+            return j;
+        }
+    }
+    return INT_MAX;
+}
+
+int get_node_from_ip_port(uint32_t ip, uint16_t port){
+    for (int j = 0; j < environment.num_servers; ++j)
+    {
+        if (ip == environment.nodes[j].ip_addr_bin && port==environment.nodes[j].port)    
+        {
+
             return j;
         }
     }
