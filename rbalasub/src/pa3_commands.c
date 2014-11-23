@@ -14,7 +14,7 @@
 uint16_t self_id;
 uint16_t self_port;
 uint32_t self_ip;
-
+char *self_ip_str;
 
 void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
@@ -165,6 +165,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
     {
         exit(EXIT_SUCCESS);
     }else if(strcasecmp("myip", argv[0])==0){
+        printf("%s\n",self_ip_str);
         printf("%d\n",self_port); 
     }else
     {
