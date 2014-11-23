@@ -256,7 +256,7 @@ uint16_t read_pkt_update(char *pkt)
         cse4589_print_and_log((char *)"%-15d%-15d\n", server_id, serv_cost);
         s_id_arr[i] = server_id;
         s_cost_arr[i] = serv_cost;
-        if (server_id == source_node.server_id)
+        if (server_id == self_id) //Path from neighbour to me
         {
             source_cost = serv_cost;
         }
