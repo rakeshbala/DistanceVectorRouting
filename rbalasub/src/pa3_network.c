@@ -43,6 +43,7 @@ void broadcast_packet(){
 		        		/******* sockaddr in dest_addr_info *********/
 		        		if ((sockfd = socket(dest_addr_info->ai_family, dest_addr_info->ai_socktype,
 		        			dest_addr_info->ai_protocol)) == -1) {
+		        			perror("socket");
 		        			continue;
 		        		}
 			        	node.socket = sockfd;
@@ -57,7 +58,7 @@ void broadcast_packet(){
 			int numbytes;
 			if ((numbytes = sendto(node.socket, pkt, pkt_size, 0,
             	dest_addr_info->ai_addr, dest_addr_info->ai_addrlen)) == -1) {
-		        perror("talker: sendto");
+		        perror("send: sendto");
 		    }
 		    break;
 		}//if

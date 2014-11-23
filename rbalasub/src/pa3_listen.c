@@ -14,10 +14,12 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <limits.h>
 
 uint16_t self_port;
 uint16_t self_id;
 char *self_ip_str;
+int listening_socket;
 /**
  * Start listening for UDP packets and multiplex with
  * stdin using select()
@@ -27,7 +29,6 @@ void start_listening(float timeout){
 	fd_set master; //master file desc set
 	fd_set read_fds; //temp for select()
 	int fd_max; //tracking maximum fd_set
-	int listening_socket;
     // socklen_t addrlen;  //length of address
     int yes = 1;
     int errorVar; //For reporting error with gai_strerror
@@ -103,14 +104,16 @@ void start_listening(float timeout){
     freeaddrinfo(receive_ai);
     /******* Print prompt *********/
     printf("[PA3]> ");
+
+    /******* Timeout Value *********/
+    struct timeval tv;
+    tv.tv_sec = (time_t)timeout;
+    tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
     /******* Main listening loop *********/
     while(true){
 
 		read_fds = master; //going to select();
 		fflush(stdout);
-		struct timeval tv;
-		tv.tv_sec = (time_t)timeout;
-		tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
 		int res = select(fd_max+1, &read_fds, NULL, NULL, &tv);
 		if (res == -1)
 		{
@@ -118,7 +121,21 @@ void start_listening(float timeout){
 			exit(EXIT_FAILURE);
 		}else if(res == 0){
 
-			printf("Timeout\n");
+			printf("Timeout happened\n");
+            tv.tv_sec = (time_t)timeout;
+            tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
+            for (int i = 0; i < environment.num_servers; ++i)
+            {
+                if (environment.nodes[i].reset_timeout == false)
+                {
+                    environment.nodes[i].timeout_counter ++;
+                    if (environment.nodes[i].timeout_counter >=3)
+                    {
+                        environment.nodes[i].cost = USHRT_MAX;
+                        environment.nodes[i].next_hop_server_id = -1;
+                    }
+                }
+            }
             broadcast_packet();
             
 		}
@@ -133,7 +150,22 @@ void start_listening(float timeout){
 					handle_commands(commandString);
 					printf("[PA3]> ");
 				}else{
-                    printf("Something received\n");
+                    /******* Read from socket *********/
+                    size_t pkt_size = 8 + 12*environment.num_servers;
+                    char pkt[pkt_size];
+                    int recv_len = recvfrom(i, &pkt, pkt_size, 0, NULL, NULL);
+                    if (recv_len<0)
+                    {
+                        perror("recvfrom");
+                    }else{
+                        uint16_t server_id = read_pkt_update(pkt);
+                        int index = get_node(server_id,SID);
+                        if (index != INT_MAX)
+                        {
+                            environment.nodes[index].reset_timeout = true;
+                            environment.nodes[index].timeout_counter = 0;
+                        }
+                    }
 
 				}
 			}

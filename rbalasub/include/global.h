@@ -17,6 +17,8 @@ typedef struct node{
 	char *ip_addr;
 	bool enabled;
 	int socket;
+	int timeout_counter;
+	int reset_timeout;
 } Node;
 
 typedef struct env_{
@@ -33,5 +35,6 @@ extern uint16_t self_port;
 extern uint16_t self_id;
 extern uint32_t self_ip;
 extern char * self_ip_str;
+extern int listening_socket;
 
 #endif

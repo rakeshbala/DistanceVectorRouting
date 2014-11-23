@@ -15,18 +15,12 @@ uint16_t self_id;
 uint16_t self_port;
 uint32_t self_ip;
 
-typedef enum {
-    IP,
-    SID,
-} GET_TYPE;
 
 void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
 void display_rt();
 int node_cmp(const void * n1, const void * n2);
 bool dump_packet(char **error_string);
-int get_node(uint32_t sid_or_ip, GET_TYPE type);
-void read_pkt_update(char *pkt);
 bool disable_link(int server_id, char **error_string);
 bool is_number ( char * string) ;
 
@@ -215,7 +209,7 @@ bool disable_link(int server_id, char **error_string)
   * Read packet and update routing table
   * @param pkt update packet
   */
-void read_pkt_update(char *pkt)
+uint16_t read_pkt_update(char *pkt)
 {
     
     uint16_t s_port;
@@ -229,9 +223,9 @@ void read_pkt_update(char *pkt)
 
     /******* Don't respond to disabled links *********/
     if (source_node.enabled == false){
-        return;
+        return USHRT_MAX;
     }
-
+    printf("\n");
     cse4589_print_and_log((char *)"RECEIVED A MESSAGE FROM SERVER %d\n",source_node.server_id);
     pkt = pkt+8;//move to the entries
     for (int i = 0; i < environment.num_servers; ++i)
@@ -255,6 +249,7 @@ void read_pkt_update(char *pkt)
         environment.nodes[compare_index] = compare_node;
     }
 
+    return source_node.server_id;
 }
 
 

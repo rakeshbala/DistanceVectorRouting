@@ -92,6 +92,8 @@ void setupEvironment(int index , char *line)
 			node.next_hop_server_id = -1;
 			node.enabled = true;
 			node.socket = INT_MAX;
+			node.timeout_counter = 0;
+			node.reset_timeout = false;
 			environment.nodes[index-2] = node;
 			free(split_array);
 
