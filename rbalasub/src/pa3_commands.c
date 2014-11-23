@@ -25,6 +25,7 @@ int node_cmp(const void * n1, const void * n2);
 bool dump_packet(char **error_string);
 bool disable_link(int server_id, char **error_string);
 bool is_number ( char * string) ;
+void run_BF_with_server(Node server_id, uint16_t server_cost, uint16_t s_id_arr[], uint16_t s_cost_arr[]);
 
 // #define NDEBUG
 #ifdef NDEBUG
@@ -155,7 +156,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
     }else if (strcasecmp("crash",argv[0])==0)
     {
         cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
-        close_all();
+        close_all(); //To remove
         while(1){};
         
     }else if (strcasecmp("dump",argv[0])==0)
@@ -223,6 +224,10 @@ uint16_t read_pkt_update(char *pkt)
     uint16_t s_port;
     uint32_t s_ip;
 
+    uint16_t s_id_arr[environment.num_servers];
+    uint16_t s_cost_arr[environment.num_servers];
+    uint16_t source_cost;
+
     /******* Get source id and port *********/
     memcpy(&s_port, pkt+2, 2);
     s_port = ntohs(s_port);
@@ -249,22 +254,53 @@ uint16_t read_pkt_update(char *pkt)
         memcpy(&serv_cost, pkt+(i*12)+10, 2);
         serv_cost = ntohs(serv_cost);
         cse4589_print_and_log((char *)"%-15d%-15d\n", server_id, serv_cost);
-        int compare_index = get_node(server_id);
-        Node compare_node = environment.nodes[compare_index];
-        if (compare_node.server_id != self_id)
+        s_id_arr[i] = server_id;
+        s_cost_arr[i] = serv_cost;
+        if (server_id == source_node.server_id)
         {
-            uint16_t new_cost = source_node.cost+ serv_cost;
-            /******* Bellman - Ford *********/
-            compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
-            environment.nodes[compare_index] = compare_node;
+            source_cost = serv_cost;
         }
-
-        
+        // int compare_index = get_node(server_id);
+        // Node compare_node = environment.nodes[compare_index];
+        // if (compare_node.server_id != self_id)
+        // {
+        //     uint16_t new_cost = source_node.cost+ serv_cost;
+        //     /******* Bellman - Ford *********/
+        //     compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
+        //     environment.nodes[compare_index] = compare_node;
+        // } 
     }
-
+    run_BF_with_server(source_node, source_cost,s_id_arr,s_cost_arr);
     return source_node.server_id;
 }
 
+/**
+ * Run Bellman-Ford Algorithm to calculate new forwarding table
+ * @param source_node neighbour sending the update pkt
+ * @param source_cost new cost to the neighbour
+ * @param s_id_arr    server ids of neigbour's neigbours
+ * @param s_cost_arr  new costs from neighbours to its neighbours
+ */
+void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_arr[], uint16_t s_cost_arr[]) {
+    /******* Set new cost to neighbour *********/
+    source_node.cost = source_cost;
+    for (int i = 0; i < environment.num_servers; ++i)
+    {
+
+        int pkt_sid = s_id_arr[i];
+        int compare_index = get_node(pkt_sid);
+        Node compare_node = environment.nodes[compare_index];
+        /******* Skip self and current neighbour *********/
+        if (compare_node.server_id != self_id && 
+            compare_node.server_id != source_node.server_id)
+        {
+            uint16_t new_cost = source_cost+ s_cost_arr[i];
+            /******* Bellman - Ford *********/
+            compare_node.cost = new_cost < compare_node.cost? new_cost : compare_node.cost;
+            environment.nodes[compare_index] = compare_node;
+        } 
+    }
+}
 
 /**
  * Get node from server_id or ip address
