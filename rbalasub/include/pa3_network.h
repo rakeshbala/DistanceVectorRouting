@@ -3,4 +3,5 @@
 
 void broadcast_packet();
 void * make_pkt();
+void close_all();
 #endif

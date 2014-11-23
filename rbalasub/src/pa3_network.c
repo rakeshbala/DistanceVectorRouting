@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
-
+#include <unistd.h>
 
 void broadcast_packet(){
 	for (int i = 0; i < environment.num_servers; ++i)
@@ -102,4 +102,15 @@ void * make_pkt(){
         memcpy(packet+18+(i*12), &(pkt_node_cost), 2);
     }
     return packet;
+}
+
+/**
+ * Close all sockets
+ */
+void close_all(){
+	for (int i = 0; i < environment.num_servers; ++i)
+	{
+		close(environment.nodes[i].socket);
+	}
+	close(listening_socket);
 }

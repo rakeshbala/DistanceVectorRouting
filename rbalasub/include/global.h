@@ -7,7 +7,9 @@
 
 #define HOSTNAME_LEN 128
 
-typedef struct node{
+//[PA3] Update Packet Start
+//[PA3] Routing Table Start
+typedef struct node_{
 	uint16_t cost;
 	uint16_t server_id;
 	uint16_t port;
@@ -20,13 +22,14 @@ typedef struct node{
 	int timeout_counter;
 	int reset_timeout;
 } Node;
+//[PA3] Routing Table End
 
 typedef struct env_{
 	int num_servers;
 	int num_neighbours;
 	Node nodes[5];
 } Environment;
-
+//[PA3] Update Packet End
 
 
 

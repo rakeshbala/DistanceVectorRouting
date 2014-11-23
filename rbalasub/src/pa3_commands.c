@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <unistd.h>
 
 uint16_t self_id;
 uint16_t self_port;
@@ -154,6 +155,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
     }else if (strcasecmp("crash",argv[0])==0)
     {
         cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
+        close_all();
         while(1){};
         
     }else if (strcasecmp("dump",argv[0])==0)
@@ -165,6 +167,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         } 
     }else if (strcasecmp("exit",argv[0])==0)
     {
+        close_all();
         exit(EXIT_SUCCESS);
     }else if(strcasecmp("myip", argv[0])==0){
         printf("%s\n",self_ip_str);
@@ -230,8 +233,6 @@ uint16_t read_pkt_update(char *pkt)
     if (source_node.enabled == false){
         return USHRT_MAX;
     }
-
-    packet_count++;//increment packet count for 'packets' comand
 
     printf("\n");
     cse4589_print_and_log((char *)"RECEIVED A MESSAGE FROM SERVER %d\n",source_node.server_id);

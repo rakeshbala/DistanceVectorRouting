@@ -139,7 +139,10 @@ void start_listening(float timeout){
                         environment.nodes[i].cost = USHRT_MAX;
                         environment.nodes[i].next_hop_server_id = -1;
                     }
+                }else{
+                    environment.nodes[i].reset_timeout = false; // Reset all marking    
                 }
+                
             }
             broadcast_packet();
 
@@ -165,6 +168,7 @@ void start_listening(float timeout){
                         perror("recvfrom");
                     }else{
                         uint16_t server_id = read_pkt_update(pkt);
+                        packet_count++;//increment packet count for 'packets' comand
                         int index = get_node(server_id);
                         if (index != INT_MAX)
                         {
