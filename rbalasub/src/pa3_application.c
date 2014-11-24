@@ -94,6 +94,7 @@ void setupEvironment(int index , char *line)
 			node.socket = INT_MAX;
 			node.timeout_counter = 0;
 			node.reset_timeout = false;
+			node.started = false;
 			environment.nodes[index-2] = node;
 			free(split_array);
 

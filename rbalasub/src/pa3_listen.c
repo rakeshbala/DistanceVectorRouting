@@ -139,10 +139,14 @@ void start_listening(float timeout){
                     if (environment.nodes[i].timeout_counter >=3)
                     {
                         environment.nodes[i].cost = USHRT_MAX;
+                        close(environment.nodes[i].socket);
                         environment.nodes[i].next_hop_server_id = -1;
                     }
                 }else{
-                    environment.nodes[i].reset_timeout = false; // Reset all marking    
+                    if (environment.nodes[i].started == true)
+                    {
+                        environment.nodes[i].reset_timeout = false; // Reset all marking                       
+                    }
                 }
                 
             }
@@ -174,6 +178,8 @@ void start_listening(float timeout){
                         int index = get_node(server_id);
                         if (index != INT_MAX)
                         {
+                            /******* Mark link as active *********/
+                            environment.nodes[index].started = true;
                             environment.nodes[index].reset_timeout = true;
                             environment.nodes[index].timeout_counter = 0;
                         }

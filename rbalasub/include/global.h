@@ -21,6 +21,7 @@ typedef struct node_{
 	int socket;
 	int timeout_counter;
 	int reset_timeout;
+	bool started;
 } Node;
 //[PA3] Routing Table End
 

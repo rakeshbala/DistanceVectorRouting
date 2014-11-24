@@ -23,10 +23,10 @@ bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_st
 void display_rt();
 int node_cmp(const void * n1, const void * n2);
 bool dump_packet(char **error_string);
-bool disable_link(int server_id, char **error_string);
+bool disable_link(uint16_t server_id, char **error_string);
 bool is_number ( char * string) ;
 void run_BF_with_server(Node server_id, uint16_t server_cost, uint16_t s_id_arr[], uint16_t s_cost_arr[]);
-
+void run_BF_with_new_cost_diff(int server_id, int difference);
 // #define NDEBUG
 #ifdef NDEBUG
 #define debug(M, ...)
@@ -191,7 +191,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
  * Disable the link to ther server_id
  * @param server_id [description]
  */
-bool disable_link(int server_id, char **error_string)
+bool disable_link(uint16_t server_id, char **error_string)
 {   
     int index = get_node(server_id);
     if (index > environment.num_servers)
@@ -199,17 +199,15 @@ bool disable_link(int server_id, char **error_string)
         *error_string = (char *)"Invalid server id";
         return false;
     }
-    Node node = environment.nodes[index];
-    if (node.neighbour == false)
+    if (environment.nodes[index].neighbour == false)
     {
         *error_string = (char *)"Server not a neighbour";
         return false;
     }
 
-    node.enabled = false;
-    node.cost = USHRT_MAX;
-    node.next_hop_server_id = -1;
-    environment.nodes[index] = node;
+    environment.nodes[index].enabled = false;
+    close(environment.nodes[index].socket);
+    run_BF_with_new_cost_diff(server_id, USHRT_MAX);
     return true;
 
 }
@@ -307,6 +305,22 @@ void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_
             }
             environment.nodes[compare_index] = compare_node;
         } 
+    }
+}
+
+void run_BF_with_new_cost_diff(int server_id, int difference){
+    for (int i = 0; i < environment.num_servers; ++i)
+    {
+        if (environment.nodes[i].next_hop_server_id == server_id)
+        {   
+            if (difference == USHRT_MAX)
+            {
+                environment.nodes[i].cost = USHRT_MAX;
+                environment.nodes[i].next_hop_server_id = -1;
+            }else{
+                environment.nodes[i].cost += difference;                
+            }
+        }
     }
 }
 
@@ -410,20 +424,21 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
         {   
             if (server_id == environment.nodes[i].server_id)
             {
+                uint16_t new_cost;
                 if ( strcasecmp("inf",cost) == 0 )
-                {
-                    environment.nodes[i].cost = USHRT_MAX;
-                    environment.nodes[i].next_hop_server_id = -1;
+                { 
+                    new_cost = USHRT_MAX;
                 }else{
 
                     if(is_number(cost) == true){
-                        uint16_t cost_int = (uint16_t)strtoul(cost, NULL, 0);
-                        environment.nodes[i].cost = cost_int;
+                        new_cost = (uint16_t)strtoul(cost, NULL, 0);
                     }else{
                         *error_string = (char *)"Invalid cost";
                         return false;
                     }
                 } 
+                int difference = new_cost== USHRT_MAX? USHRT_MAX:(int)new_cost-(int)environment.nodes[i].cost;
+                run_BF_with_new_cost_diff( server_id, difference);
                 return true;
             }
         }
