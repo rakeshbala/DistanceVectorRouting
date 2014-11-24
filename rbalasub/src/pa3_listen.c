@@ -138,7 +138,7 @@ void start_listening(float timeout){
                     // debug()
                     if (environment.nodes[i].timeout_counter >=3)
                     {
-                        printf("Link with %u disabled\n",environment.nodes[i].server_id);
+                        printf("\nLink with %u disabled\n",environment.nodes[i].server_id);
                         char *error_str;
                         disable_link(environment.nodes[i].server_id, &error_str);
                     }

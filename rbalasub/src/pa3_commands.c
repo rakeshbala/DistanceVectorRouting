@@ -18,14 +18,23 @@ uint32_t self_ip;
 char *self_ip_str;
 int packet_count=0;
 
+
+typedef struct pkt_node_
+{
+    uint16_t server_id;
+    uint16_t cost;
+}Pkt_node;
+
 void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
 void display_rt();
 int node_cmp(const void * n1, const void * n2);
 bool dump_packet(char **error_string);
 bool is_number ( char * string) ;
-void run_BF_with_server(Node server_id, uint16_t server_cost, uint16_t s_id_arr[], uint16_t s_cost_arr[]);
+void run_BF_with_server(Node server_id, uint16_t server_cost, Pkt_node entries[environment.num_servers]);
 void run_BF_with_new_cost_diff(int server_id, int difference);
+void print_pkt(Pkt_node entries[environment.num_servers]);
+
 // #define NDEBUG
 #ifdef NDEBUG
 #define debug(M, ...)
@@ -220,10 +229,9 @@ uint16_t read_pkt_update(char *pkt)
     uint16_t s_port;
     uint32_t s_ip;
 
-    uint16_t s_id_arr[environment.num_servers];
-    uint16_t s_cost_arr[environment.num_servers];
     uint16_t source_cost;
 
+    Pkt_node entries[environment.num_servers];
     /******* Get source id and port *********/
     memcpy(&s_port, pkt+2, 2);
     s_port = ntohs(s_port);
@@ -249,17 +257,27 @@ uint16_t read_pkt_update(char *pkt)
         uint16_t serv_cost;
         memcpy(&serv_cost, pkt+(i*12)+10, 2);
         serv_cost = ntohs(serv_cost);
-        cse4589_print_and_log((char *)"%-15d%-15d\n", server_id, serv_cost);
-        s_id_arr[i] = server_id;
-        s_cost_arr[i] = serv_cost;
+        entries[i].server_id = server_id;
+        entries[i].cost = serv_cost;
         if (server_id == self_id) //Path from neighbour to me
         {
             source_cost = serv_cost;
         } 
     }
-    run_BF_with_server(source_node, source_cost,s_id_arr,s_cost_arr);
+    qsort( entries, environment.num_servers, sizeof(Pkt_node), node_cmp);
+    print_pkt(entries);
+    run_BF_with_server(source_node, source_cost,entries);
     printf("[PA3]> ");
     return source_node.server_id;
+}
+
+
+void print_pkt(Pkt_node entries[environment.num_servers])
+{
+    for (int i = 0; i < environment.num_servers; ++i)
+    {
+        cse4589_print_and_log((char *)"%-15d%-15d\n", entries[i].server_id, entries[i].cost);
+    }
 }
 
 /**
@@ -269,14 +287,14 @@ uint16_t read_pkt_update(char *pkt)
  * @param s_id_arr    server ids of neigbour's neigbours
  * @param s_cost_arr  new costs from neighbours to its neighbours
  */
-void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_arr[], uint16_t s_cost_arr[]) {
+void run_BF_with_server ( Node source_node, uint16_t source_cost, Pkt_node entries[environment.num_servers]) {
     /******* Set new cost to neighbour *********/
     // source_node.cost = source_cost;
     /******* Set cost to rest of the nodes in network *********/
     for (int i = 0; i < environment.num_servers; ++i)
     {
 
-        int pkt_sid = s_id_arr[i];
+        int pkt_sid = entries[i].server_id;
         int compare_index = get_node(pkt_sid);
         Node compare_node = environment.nodes[compare_index];
         /******* Skip self *********/
@@ -289,15 +307,15 @@ void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_
                 new_cost = source_cost;
             }else if (compare_node.next_hop_server_id == source_node.server_id)
             {
-                compare_node.cost = source_cost+s_cost_arr[i];
+                compare_node.cost = source_cost+entries[i].cost;
                 new_cost = USHRT_MAX; // skip BF
             }
             /******* Check addition with inf value to avoid wrap around *********/
-            else if(source_cost == USHRT_MAX || s_cost_arr[i] == USHRT_MAX)
+            else if(source_cost == USHRT_MAX || entries[i].cost == USHRT_MAX)
             {
                 new_cost = USHRT_MAX;
             }else{
-                new_cost = source_cost+ s_cost_arr[i];
+                new_cost = source_cost+ entries[i].cost;
             }
             /******* Bellman - Ford *********/
             if (new_cost<compare_node.cost)
