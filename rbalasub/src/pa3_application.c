@@ -93,7 +93,7 @@ void setupEvironment(int index , char *line)
 			node.enabled = true;
 			node.socket = INT_MAX;
 			node.timeout_counter = 0;
-			node.reset_timeout = false;
+			node.reset_timeout = true;
 			node.started = false;
 			environment.nodes[index-2] = node;
 			free(split_array);
