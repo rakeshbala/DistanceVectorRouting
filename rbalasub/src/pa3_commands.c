@@ -19,11 +19,7 @@ char *self_ip_str;
 int packet_count=0;
 
 
-typedef struct pkt_node_
-{
-    uint16_t server_id;
-    uint16_t cost;
-}Pkt_node;
+
 
 void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
