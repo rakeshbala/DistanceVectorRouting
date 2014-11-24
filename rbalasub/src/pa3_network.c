@@ -1,6 +1,6 @@
 #include "../include/pa3_network.h"
 #include "../include/global.h"
-
+#include "../include/pa3_application.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,9 +108,11 @@ void * make_pkt(){
  * Close all sockets
  */
 void close_all(){
+
 	for (int i = 0; i < environment.num_servers; ++i)
 	{
 		close(environment.nodes[i].socket);
 	}
+	free_all();
 	close(listening_socket);
 }

@@ -68,6 +68,7 @@ void setupEvironment(int index , char *line)
 		environment.num_servers = atoi(line);
 	}else if(index == 1){
 		environment.num_neighbours = atoi(line);
+		environment.nodes = (Node *)calloc(sizeof(Node), environment.num_servers);
 	}else{
 		/******* Set default state of all nodes in the system *********/
 		if (index <= 1+environment.num_servers){
@@ -95,6 +96,7 @@ void setupEvironment(int index , char *line)
 			node.timeout_counter = 0;
 			node.reset_timeout = true;
 			node.started = false;
+			node.dv = (Pkt_node *)calloc(sizeof(Pkt_node), environment.num_servers);
 			environment.nodes[index-2] = node;
 			free(split_array);
 
@@ -139,3 +141,11 @@ void setupEvironment(int index , char *line)
 	}
 }
 
+/******* Free allocated memory *********/
+void free_all(){
+	for (int j = 0; j < environment.num_servers; ++j)
+	{
+		free(environment.nodes[j].dv);
+	}
+	free(environment.nodes);
+}

@@ -7,6 +7,13 @@
 
 #define HOSTNAME_LEN 128
 
+/******* For printing *********/
+typedef struct pkt_node_
+{
+    uint16_t server_id;
+    uint16_t cost;
+}Pkt_node;
+
 //[PA3] Update Packet Start
 //[PA3] Routing Table Start
 typedef struct node_{
@@ -22,22 +29,18 @@ typedef struct node_{
 	int timeout_counter;
 	int reset_timeout;
 	bool started;
+	Pkt_node *dv;
 } Node;
 //[PA3] Routing Table End
 
 typedef struct env_{
 	int num_servers;
 	int num_neighbours;
-	Node nodes[5];
+	Node *nodes;
 } Environment;
 //[PA3] Update Packet End
 
-/******* For printing *********/
-typedef struct pkt_node_
-{
-    uint16_t server_id;
-    uint16_t cost;
-}Pkt_node;
+
 
 extern Environment environment;
 extern uint16_t self_port;
