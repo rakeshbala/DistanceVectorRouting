@@ -32,7 +32,12 @@ typedef struct env_{
 } Environment;
 //[PA3] Update Packet End
 
-
+/******* For printing *********/
+typedef struct pkt_node_
+{
+    uint16_t server_id;
+    uint16_t cost;
+}Pkt_node;
 
 extern Environment environment;
 extern uint16_t self_port;
