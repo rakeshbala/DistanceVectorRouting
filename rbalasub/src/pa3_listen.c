@@ -138,9 +138,9 @@ void start_listening(float timeout){
                     // debug()
                     if (environment.nodes[i].timeout_counter >=3)
                     {
-                        environment.nodes[i].cost = USHRT_MAX;
-                        close(environment.nodes[i].socket);
-                        environment.nodes[i].next_hop_server_id = -1;
+                        printf("Link with %u disabled\n",environment.nodes[i].server_id);
+                        char *error_str;
+                        disable_link(environment.nodes[i].server_id, &error_str);
                     }
                 }else{
                     if (environment.nodes[i].started == true)
