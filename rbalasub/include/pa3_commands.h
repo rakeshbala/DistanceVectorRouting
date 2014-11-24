@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifndef PA3_COMMANDS_
 #define PA3_COMMANDS_ 
