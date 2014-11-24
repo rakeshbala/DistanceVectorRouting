@@ -320,6 +320,7 @@ void run_BF_with_new_cost_diff(int server_id, int difference){
             {
                 environment.nodes[i].cost = USHRT_MAX;
                 environment.nodes[i].next_hop_server_id = -1;
+                environment.nodes[i].neighbour = false;
                 close(environment.nodes[i].socket);
             }else{
                 environment.nodes[i].cost += difference;                
