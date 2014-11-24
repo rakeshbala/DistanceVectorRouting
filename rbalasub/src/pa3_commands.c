@@ -25,6 +25,7 @@ void processCommands(int argc, char **argv);
 bool update_cost(uint16_t my_id, uint16_t server_id, char *cost, char **error_string);
 void display_rt();
 int node_cmp(const void * n1, const void * n2);
+int node_cmp2(const void * n1, const void * n2);
 bool dump_packet(char **error_string);
 bool is_number ( char * string) ;
 void run_BF_with_server(Node server_id, uint16_t server_cost, Pkt_node entries[environment.num_servers]);
@@ -260,7 +261,7 @@ uint16_t read_pkt_update(char *pkt)
             source_cost = serv_cost;
         } 
     }
-    qsort( entries, environment.num_servers, sizeof(Pkt_node), node_cmp);
+    qsort( entries, environment.num_servers, sizeof(Pkt_node), node_cmp2);
     print_pkt(entries);
     run_BF_with_server(source_node, source_cost,entries);
     printf("[PA3]> ");
@@ -427,11 +428,15 @@ int node_cmp(const void * n1, const void * n2){
     Node *n2_s = (Node *)n2;
     return n1_s->server_id - n2_s->server_id;
 }
-
+int node_cmp2(const void * n1, const void * n2){
+    Pkt_node *n1_s = (Pkt_node *)n1;
+    Pkt_node *n2_s = (Pkt_node *)n2;
+    return n1_s->server_id - n2_s->server_id;
+}
 /**
  * Update cost between two links (will be executed on both machines)
  * @param  my_id        self server_id
- * @param  server_id    server_id of the node
+ * @param  server_id    server_id of the Pkt_node
  * @param  cost         cost to be updated
  * @param  error_string error string out parameter if any
  * @return              update was successful or not
