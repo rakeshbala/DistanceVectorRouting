@@ -287,6 +287,10 @@ void run_BF_with_server ( Node source_node, uint16_t source_cost, uint16_t s_id_
             if (compare_node.server_id == source_node.server_id)
             {
                 new_cost = source_cost;
+            }else if (compare_node.next_hop_server_id == source_node.server_id)
+            {
+                compare_node.cost = source_cost+s_cost_arr[i];
+                new_cost = USHRT_MAX; // skip BF
             }
             /******* Check addition with inf value to avoid wrap around *********/
             else if(source_cost == USHRT_MAX || s_cost_arr[i] == USHRT_MAX)
