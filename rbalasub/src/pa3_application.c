@@ -14,7 +14,9 @@ Environment environment;
 Node *self_node;
 
 
-void setupEvironment(int index, char * line);
+void parseLine(int index, char * line);
+void setup_environment(FILE *topology_file);
+
 /**
  * The main entry point of the application
  * @param top_file_path Path to topology file
@@ -27,17 +29,7 @@ void start_run_loop(char *top_file_path, float timeout)
 	FILE *topology_file = fopen(top_file_path,"r");
 	if (topology_file != NULL )
 	{
-		size_t size = 30;
-		char *line= (char *)malloc(size);
-		int index = 0;
-		/******* Parse each line of topology file*********/
-		while(getline(&line,&size,topology_file) != -1){
-			/******* Setup environment *********/
-			setupEvironment(index,line);
-			index++;
-		}
-
-		free(line);
+		setup_environment(topology_file);
 		fclose(topology_file);
 	}else{
 
@@ -52,14 +44,56 @@ void start_run_loop(char *top_file_path, float timeout)
 
 }
 
+void setup_environment(FILE *topology_file)
+{
+	size_t size = 30;
+	char *line= (char *)malloc(size);
+	int index = 0;
+		/******* Parse each line of topology file*********/
+	while(getline(&line,&size,topology_file) != -1){
+			/******* Setup environment *********/
+		parseLine(index,line);
+		index++;
+	}
+	free(line);
+	/******* Initialize distance vectors *********/
+	for (int i = 0; i < environment.num_servers; ++i)
+	{
+		for (int j = 0; j < environment.num_servers; ++j)
+		{
+			environment.nodes[i].dv[j].server_id = environment.nodes[j].server_id;
+			if (environment.nodes[i].server_id == self_node->server_id)
+			{
+				environment.nodes[i].dv[j].cost = environment.nodes[j].cost;
+			}else{
+				//Cost to self
+				if (environment.nodes[i].dv[j].server_id == environment.nodes[i].server_id)
+				{
+					environment.nodes[i].dv[j].cost = 0;
+				}else{
+					environment.nodes[i].dv[j].cost = USHRT_MAX;					
+				}
 
+				if(environment.nodes[i].neighbour == true){
+					//Cost to neighbour
+					if (environment.nodes[j].server_id==self_node->server_id)
+					{
+						environment.nodes[i].dv[j].cost = environment.nodes[i].cost;
+					}
+				}
+			} 
+			
+
+		}
+	}
+}
 
 /**
  * Setup the environment variables for each line in topology file
  * @param index index of line being read
  * @param line  line being read
  */
-void setupEvironment(int index , char *line)
+void parseLine(int index , char *line)
 {	
 	if (strlen(line)<=1)
 	{
@@ -96,11 +130,6 @@ void setupEvironment(int index , char *line)
 			node.timeout_counter = 0;
 			node.reset_timeout = true;
 			node.started = false;
-			for (int i = 0; i < environment.num_servers; ++i)
-			{
-				node.dv[i].server_id = 0;
-				node.dv[i].cost = USHRT_MAX;
-			}
 			environment.nodes[index-2] = node;
 			free(split_array);
 
@@ -123,6 +152,8 @@ void setupEvironment(int index , char *line)
 				/******* Set self node global variable *********/
 				if (environment.nodes[i].server_id == self_id){
 					self_node = &environment.nodes[i];
+					self_node->cost = 0;
+					self_node->next_hop_server_id = self_node->server_id;
 				}else if(environment.nodes[i].server_id == split_array[1]){ 
 					/******* Set state of neighbours *********/
 					environment.nodes[i].cost = split_array[2];
