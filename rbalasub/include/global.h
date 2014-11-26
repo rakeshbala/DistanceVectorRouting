@@ -43,7 +43,10 @@ typedef struct env_{
 
 
 extern Environment environment;
-extern Node *self_node;
+extern uint16_t self_id;
+extern char * self_ip_str;
+extern uint32_t self_ip;
+extern uint16_t self_port;
 extern int listening_socket;
 extern int packet_count;
 

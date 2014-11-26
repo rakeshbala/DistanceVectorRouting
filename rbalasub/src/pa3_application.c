@@ -11,8 +11,8 @@
 
 /******* Globals *********/
 Environment environment;
-Node *self_node;
 
+uint16_t self_id;
 
 void parseLine(int index, char * line);
 void setup_environment(FILE *topology_file);
@@ -49,9 +49,9 @@ void setup_environment(FILE *topology_file)
 	size_t size = 30;
 	char *line= (char *)malloc(size);
 	int index = 0;
-		/******* Parse each line of topology file*********/
+	/******* Parse each line of topology file*********/
 	while(getline(&line,&size,topology_file) != -1){
-			/******* Setup environment *********/
+		/******* Setup environment *********/
 		parseLine(index,line);
 		index++;
 	}
@@ -62,7 +62,7 @@ void setup_environment(FILE *topology_file)
 		for (int j = 0; j < environment.num_servers; ++j)
 		{
 			environment.nodes[i].dv[j].server_id = environment.nodes[j].server_id;
-			if (environment.nodes[i].server_id == self_node->server_id)
+			if (environment.nodes[i].server_id == self_id)
 			{
 				environment.nodes[i].dv[j].cost = environment.nodes[j].cost;
 			}else{
@@ -73,17 +73,14 @@ void setup_environment(FILE *topology_file)
 				}else{
 					environment.nodes[i].dv[j].cost = USHRT_MAX;					
 				}
-
 				if(environment.nodes[i].neighbour == true){
 					//Cost to neighbour
-					if (environment.nodes[j].server_id==self_node->server_id)
+					if (environment.nodes[j].server_id==self_id)
 					{
 						environment.nodes[i].dv[j].cost = environment.nodes[i].cost;
 					}
 				}
-			} 
-			
-
+			} 		
 		}
 	}
 }
@@ -146,14 +143,15 @@ void parseLine(int index , char *line)
 				split = strtok(NULL," ");
 			}
 			/******* Set self id *********/
-			uint16_t self_id = split_array[0];
+			self_id = split_array[0];
 			for (int i = 0; i < environment.num_servers; ++i)
 			{
 				/******* Set self node global variable *********/
 				if (environment.nodes[i].server_id == self_id){
-					self_node = &environment.nodes[i];
-					self_node->cost = 0;
-					self_node->next_hop_server_id = self_node->server_id;
+					environment.nodes[i].cost = 0;
+					environment.nodes[i].next_hop_server_id = self_id;
+					self_ip_str = environment.nodes[i].ip_addr;
+					self_ip = environment.nodes[i].ip_addr_bin;
 				}else if(environment.nodes[i].server_id == split_array[1]){ 
 					/******* Set state of neighbours *********/
 					environment.nodes[i].cost = split_array[2];

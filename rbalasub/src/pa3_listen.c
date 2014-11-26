@@ -3,6 +3,7 @@
 #include "../include/pa3_commands.h"
 #include "../include/pa3_network.h"
 
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -16,7 +17,10 @@
 #include <sys/time.h>
 #include <limits.h>
 
-Node *self_node;
+
+uint16_t self_port;
+uint16_t self_id;
+uint32_t self_ip;
 int listening_socket;
 /**
  * Start listening for UDP packets and multiplex with
@@ -42,9 +46,9 @@ void start_listening(float timeout){
     hints.ai_flags = AI_PASSIVE;
 
     char port[5];
-    sprintf(port, "%d",self_node->port);
+    sprintf(port, "%d",self_port);
     /******* Get addrinfo *********/
-    if ((errorVar = getaddrinfo(self_node->ip_addr, port, &hints, &receive_ai))!=0)
+    if ((errorVar = getaddrinfo(self_ip_str, port, &hints, &receive_ai))!=0)
     {
         fprintf(stderr, "Get addr info: %s\n", gai_strerror(errorVar));
         exit(EXIT_FAILURE);
@@ -119,13 +123,16 @@ void start_listening(float timeout){
 			exit(EXIT_FAILURE);
 		}else if(res == 0){
 			printf("\nPeriodic update..\n\n");
+            printf("\n");
+            display_rt();
+
             printf("[PA3]> ");
 
             tv.tv_sec = (time_t)timeout;
             tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
             for (int i = 0; i < environment.num_servers; ++i)
             {
-                if (environment.nodes[i].server_id == self_node->server_id 
+                if (environment.nodes[i].server_id == self_id 
                     || environment.nodes[i].neighbour == false)
                 {
                     continue;
@@ -133,6 +140,7 @@ void start_listening(float timeout){
                 if (environment.nodes[i].reset_timeout == false)
                 {
                     environment.nodes[i].timeout_counter++;
+                    printf("%d missed\n",environment.nodes[i].server_id);
                     // debug()
                     if (environment.nodes[i].timeout_counter >=3)
                     {

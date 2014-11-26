@@ -14,7 +14,11 @@
 #include <unistd.h>
 
 
-Node *self_node;
+
+uint16_t self_id;
+uint32_t self_ip;
+char *self_ip_str;
+uint16_t self_port;
 int packet_count=0;
 
 
@@ -173,8 +177,8 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         close_all();
         exit(EXIT_SUCCESS);
     }else if(strcasecmp("myip", argv[0])==0){
-        printf("%s\n",self_node->ip_addr);
-        printf("%d\n",self_node->port); 
+        printf("%s\n",self_ip_str);
+        printf("%d\n",self_port); 
     }else
     {
         error_flag = true;
@@ -209,7 +213,7 @@ bool disable_link(uint16_t server_id, char **error_string, bool set_disable)
 
     environment.nodes[index].enabled = !set_disable;
 
-    uint16_t dv_index = get_dv_idx(self_node->server_id, environment.nodes[index].dv);
+    uint16_t dv_index = get_dv_idx(self_id, environment.nodes[index].dv);
     environment.nodes[index].dv[dv_index].cost = USHRT_MAX;
     run_BF();
     return true;
@@ -255,12 +259,13 @@ uint16_t read_pkt_update(char *pkt)
         serv_cost = ntohs(serv_cost);
         environment.nodes[source_index].dv[i].server_id = server_id;
         environment.nodes[source_index].dv[i].cost = serv_cost;
-        if (server_id == self_node->server_id) //Path from neighbour to me
+        if (server_id == self_id) //Path from neighbour to me
         {
             source_cost = serv_cost;
         } 
     }
-    qsort( environment.nodes[source_index].dv, environment.num_servers, sizeof(Pkt_node), node_cmp2);
+    Pkt_node *sort_arr = environment.nodes[source_index].dv;
+    qsort( sort_arr, environment.num_servers, sizeof(Pkt_node), node_cmp2);
     print_pkt(environment.nodes[source_index].dv);
 
     run_BF();
@@ -336,7 +341,8 @@ bool dump_packet(char **error_string){
 void display_rt(){
 
     /******* Sort the nodes *********/
-    qsort( environment.nodes, environment.num_servers, sizeof(Node), node_cmp);
+    Node *sort_nodes = environment.nodes;
+    qsort( sort_nodes, environment.num_servers, sizeof(Node), node_cmp);
 
     for (int i = 0; i < environment.num_servers ; ++i)
     {
@@ -373,7 +379,7 @@ int node_cmp2(const void * n1, const void * n2){
  */
 bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_string) {
 
-    if (my_id != self_node->server_id)
+    if (my_id != self_id)
     {
       *error_string = (char *)"Invalid server_id 1";
       return false;
@@ -381,7 +387,7 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
         for (int i = 0; i < environment.num_servers; ++i)
         {   
             if (server_id == environment.nodes[i].server_id 
-                && server_id != self_node->server_id
+                && server_id != self_id
                 && environment.nodes[i].neighbour == true)
             {
                 uint16_t new_cost;

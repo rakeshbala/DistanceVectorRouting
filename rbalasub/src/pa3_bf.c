@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-Node *self_node;
+uint16_t self_id;
 
 
 /**
@@ -19,7 +19,7 @@ void run_BF(){
 		Node node = environment.nodes[i];
 		node.cost = USHRT_MAX;
 		node.next_hop_server_id = -1;
-		if (node.server_id == self_node->server_id)
+		if (node.server_id == self_id)
 		{
 			node.cost = 0; //cost to self
 			node.next_hop_server_id = node.server_id;
@@ -37,7 +37,7 @@ void run_BF(){
 			if (compare_node.neighbour == true)
 			{
 				// self -----> j
-				uint16_t self_dv_index = get_dv_idx(self_node->server_id,compare_node.dv);
+				uint16_t self_dv_index = get_dv_idx(self_id,compare_node.dv);
 				uint16_t cost_to_node = compare_node.dv[self_dv_index].cost;
 
 				//j -------- > i
@@ -52,7 +52,7 @@ void run_BF(){
 				if (node.cost>total_cost)
 				{
 					node.cost = total_cost;
-					node.next_hop_server_id = j;
+					node.next_hop_server_id = compare_node.server_id;
 				}
 			}
 		}
