@@ -29,24 +29,21 @@ typedef struct node_{
 	int timeout_counter;
 	int reset_timeout;
 	bool started;
-	Pkt_node *dv;
+	Pkt_node dv[5];
 } Node;
 //[PA3] Routing Table End
 
 typedef struct env_{
 	int num_servers;
 	int num_neighbours;
-	Node *nodes;
+	Node nodes[5];
 } Environment;
 //[PA3] Update Packet End
 
 
 
 extern Environment environment;
-extern uint16_t self_port;
-extern uint16_t self_id;
-extern uint32_t self_ip;
-extern char * self_ip_str;
+extern Node *self_node;
 extern int listening_socket;
 extern int packet_count;
 

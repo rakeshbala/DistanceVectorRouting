@@ -2,6 +2,7 @@
 #include "../include/global.h"
 #include "../include/logger.h"
 #include "../include/pa3_network.h"
+#include "../include/pa3_bf.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,10 +13,8 @@
 #include <errno.h>
 #include <unistd.h>
 
-uint16_t self_id;
-uint16_t self_port;
-uint32_t self_ip;
-char *self_ip_str;
+
+Node *self_node;
 int packet_count=0;
 
 
@@ -28,8 +27,6 @@ int node_cmp(const void * n1, const void * n2);
 int node_cmp2(const void * n1, const void * n2);
 bool dump_packet(char **error_string);
 bool is_number ( char * string) ;
-void run_BF_with_server(Node server_id, uint16_t server_cost, Pkt_node entries[environment.num_servers]);
-void run_BF_with_new_cost_diff(int server_id, int difference);
 void print_pkt(Pkt_node entries[environment.num_servers]);
 
 // #define NDEBUG
@@ -149,7 +146,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
                 error_string = (char *)"Invalid server id";
                 error_flag = true;
             }else{
-                error_flag = !disable_link(server_id, &error_string); 
+                error_flag = !disable_link(server_id, &error_string,true); 
                 if (error_flag == false)
                 {
                     cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);          
@@ -176,8 +173,8 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         close_all();
         exit(EXIT_SUCCESS);
     }else if(strcasecmp("myip", argv[0])==0){
-        printf("%s\n",self_ip_str);
-        printf("%d\n",self_port); 
+        printf("%s\n",self_node->ip_addr);
+        printf("%d\n",self_node->port); 
     }else
     {
         error_flag = true;
@@ -196,7 +193,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
  * Disable the link to ther server_id
  * @param server_id [description]
  */
-bool disable_link(uint16_t server_id, char **error_string)
+bool disable_link(uint16_t server_id, char **error_string, bool set_disable)
 {   
     int index = get_node(server_id);
     if (index > environment.num_servers)
@@ -210,8 +207,11 @@ bool disable_link(uint16_t server_id, char **error_string)
         return false;
     }
 
-    environment.nodes[index].enabled = false;
-    run_BF_with_new_cost_diff(server_id, USHRT_MAX);
+    environment.nodes[index].enabled = !set_disable;
+
+    uint16_t dv_index = get_dv_idx(self_node->server_id, environment.nodes[index].dv);
+    environment.nodes[index].dv[dv_index].cost = USHRT_MAX;
+    run_BF();
     return true;
 
 }
@@ -228,20 +228,19 @@ uint16_t read_pkt_update(char *pkt)
 
     uint16_t source_cost;
 
-    Pkt_node entries[environment.num_servers];
     /******* Get source id and port *********/
     memcpy(&s_port, pkt+2, 2);
     s_port = ntohs(s_port);
     memcpy(&s_ip, pkt+4, 4);
-    Node source_node = environment.nodes[get_node_from_ip_port(s_ip,s_port)];
+    int source_index = get_node_from_ip_port(s_ip,s_port);
 
     /******* Don't respond to disabled links *********/
-    if (source_node.enabled == false){
+    if (environment.nodes[source_index].enabled == false){
         return USHRT_MAX;
     }
 
     printf("\n");
-    cse4589_print_and_log((char *)"RECEIVED A MESSAGE FROM SERVER %d\n",source_node.server_id);
+    cse4589_print_and_log((char *)"RECEIVED A MESSAGE FROM SERVER %d\n",environment.nodes[source_index].server_id);
     pkt = pkt+8;//move to the entries
     for (int i = 0; i < environment.num_servers; ++i)
     {
@@ -254,18 +253,19 @@ uint16_t read_pkt_update(char *pkt)
         uint16_t serv_cost;
         memcpy(&serv_cost, pkt+(i*12)+10, 2);
         serv_cost = ntohs(serv_cost);
-        entries[i].server_id = server_id;
-        entries[i].cost = serv_cost;
-        if (server_id == self_id) //Path from neighbour to me
+        environment.nodes[source_index].dv[i].server_id = server_id;
+        environment.nodes[source_index].dv[i].cost = serv_cost;
+        if (server_id == self_node->server_id) //Path from neighbour to me
         {
             source_cost = serv_cost;
         } 
     }
-    qsort( entries, environment.num_servers, sizeof(Pkt_node), node_cmp2);
-    print_pkt(entries);
-    run_BF_with_server(source_node, source_cost,entries);
+    qsort( environment.nodes[source_index].dv, environment.num_servers, sizeof(Pkt_node), node_cmp2);
+    print_pkt(environment.nodes[source_index].dv);
+
+    run_BF();
     printf("[PA3]> ");
-    return source_node.server_id;
+    return environment.nodes[source_index].server_id;
 }
 
 
@@ -277,76 +277,6 @@ void print_pkt(Pkt_node entries[environment.num_servers])
     }
 }
 
-/**
- * Run Bellman-Ford Algorithm to calculate new forwarding table
- * @param source_node neighbour sending the update pkt
- * @param source_cost new cost to the neighbour
- * @param s_id_arr    server ids of neigbour's neigbours
- * @param s_cost_arr  new costs from neighbours to its neighbours
- */
-void run_BF_with_server ( Node source_node, uint16_t source_cost, Pkt_node entries[environment.num_servers]) {
-    /******* Set new cost to neighbour *********/
-    // source_node.cost = source_cost;
-    /******* Set cost to rest of the nodes in network *********/
-    for (int i = 0; i < environment.num_servers; ++i)
-    {
-
-        int pkt_sid = entries[i].server_id;
-        int compare_index = get_node(pkt_sid);
-        Node compare_node = environment.nodes[compare_index];
-        /******* Skip self *********/
-        if (compare_node.server_id != self_id )
-        {
-            uint16_t new_cost;
-            /******* Current neighbour *********/
-            if (compare_node.server_id == source_node.server_id)
-            {
-                new_cost = source_cost;
-            }else if (compare_node.next_hop_server_id == source_node.server_id)
-            {
-                compare_node.cost = source_cost+entries[i].cost;
-                new_cost = USHRT_MAX; // skip BF
-            }
-            /******* Check addition with inf value to avoid wrap around *********/
-            else if(source_cost == USHRT_MAX || entries[i].cost == USHRT_MAX)
-            {
-                new_cost = USHRT_MAX;
-            }else{
-                new_cost = source_cost+ entries[i].cost;
-            }
-            /******* Bellman - Ford *********/
-            if (new_cost<compare_node.cost)
-            {
-                compare_node.cost = new_cost;
-                compare_node.next_hop_server_id = source_node.server_id;
-            }
-            environment.nodes[compare_index] = compare_node;
-        } 
-    }
-}
-
-/**
- * Bellman-Ford for individual cost updation
- * @param server_id  server id of server whose cost changed
- * @param difference difference in cost
- */
-void run_BF_with_new_cost_diff(int server_id, int difference){
-    for (int i = 0; i < environment.num_servers; ++i)
-    {
-        if (environment.nodes[i].next_hop_server_id == server_id)
-        {   
-            if (difference == USHRT_MAX)
-            {
-                environment.nodes[i].cost = USHRT_MAX;
-                environment.nodes[i].next_hop_server_id = -1;
-                environment.nodes[i].neighbour = false;
-                close(environment.nodes[i].socket);
-            }else{
-                environment.nodes[i].cost += difference;                
-            }
-        }
-    }
-}
 
 /**
  * Get node from server_id or ip address
@@ -443,14 +373,16 @@ int node_cmp2(const void * n1, const void * n2){
  */
 bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_string) {
 
-    if (my_id != self_id)
+    if (my_id != self_node->server_id)
     {
       *error_string = (char *)"Invalid server_id 1";
       return false;
     }else{
         for (int i = 0; i < environment.num_servers; ++i)
         {   
-            if (server_id == environment.nodes[i].server_id)
+            if (server_id == environment.nodes[i].server_id 
+                && server_id != self_node->server_id
+                && environment.nodes[i].neighbour == true)
             {
                 uint16_t new_cost;
                 if ( strcasecmp("inf",cost) == 0 )
@@ -465,9 +397,12 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
                         return false;
                     }
                 } 
+                /******* Update the corresponding distance vector *********/
+                int index = get_node(server_id);
+                int dv_index = get_dv_idx(my_id, environment.nodes[index].dv);
+                environment.nodes[index].dv[dv_index].cost = new_cost;
                 /******* Run the BF algo again *********/
-                int difference = new_cost== USHRT_MAX ? USHRT_MAX:(int)new_cost-(int)environment.nodes[i].cost;
-                run_BF_with_new_cost_diff( server_id, difference);
+                run_BF();
                 return true;
             }
         }

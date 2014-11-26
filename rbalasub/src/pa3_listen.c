@@ -16,9 +16,7 @@
 #include <sys/time.h>
 #include <limits.h>
 
-uint16_t self_port;
-uint16_t self_id;
-char *self_ip_str;
+Node *self_node;
 int listening_socket;
 /**
  * Start listening for UDP packets and multiplex with
@@ -44,9 +42,9 @@ void start_listening(float timeout){
     hints.ai_flags = AI_PASSIVE;
 
     char port[5];
-    sprintf(port, "%d",self_port);
+    sprintf(port, "%d",self_node->port);
     /******* Get addrinfo *********/
-    if ((errorVar = getaddrinfo(self_ip_str, port, &hints, &receive_ai))!=0)
+    if ((errorVar = getaddrinfo(self_node->ip_addr, port, &hints, &receive_ai))!=0)
     {
         fprintf(stderr, "Get addr info: %s\n", gai_strerror(errorVar));
         exit(EXIT_FAILURE);
@@ -127,7 +125,7 @@ void start_listening(float timeout){
             tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
             for (int i = 0; i < environment.num_servers; ++i)
             {
-                if (environment.nodes[i].server_id == self_id 
+                if (environment.nodes[i].server_id == self_node->server_id 
                     || environment.nodes[i].neighbour == false)
                 {
                     continue;
@@ -140,7 +138,7 @@ void start_listening(float timeout){
                     {
                         printf("\nLink with %u disabled\n",environment.nodes[i].server_id);
                         char *error_str;
-                        disable_link(environment.nodes[i].server_id, &error_str);
+                        disable_link(environment.nodes[i].server_id, &error_str,false);
                     }
                 }else{
                     if (environment.nodes[i].started == true)

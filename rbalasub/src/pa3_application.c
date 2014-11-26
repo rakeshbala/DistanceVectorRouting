@@ -1,6 +1,7 @@
 #include "../include/pa3_application.h"
 #include "../include/global.h"
 #include "../include/pa3_listen.h"
+#include "../include/pa3_bf.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,10 +11,8 @@
 
 /******* Globals *********/
 Environment environment;
-uint16_t self_port=0;
-uint16_t self_id=0;
-uint32_t self_ip=0;
-char * self_ip_str;
+Node *self_node;
+
 
 void setupEvironment(int index, char * line);
 /**
@@ -46,6 +45,8 @@ void start_run_loop(char *top_file_path, float timeout)
 		exit(EXIT_FAILURE);
 	}
 
+	//Run BF for the first time
+	run_BF();
 	//Start listening to updates
 	start_listening(timeout);
 
@@ -68,7 +69,6 @@ void setupEvironment(int index , char *line)
 		environment.num_servers = atoi(line);
 	}else if(index == 1){
 		environment.num_neighbours = atoi(line);
-		environment.nodes = (Node *)calloc(sizeof(Node), environment.num_servers);
 	}else{
 		/******* Set default state of all nodes in the system *********/
 		if (index <= 1+environment.num_servers){
@@ -96,7 +96,11 @@ void setupEvironment(int index , char *line)
 			node.timeout_counter = 0;
 			node.reset_timeout = true;
 			node.started = false;
-			node.dv = (Pkt_node *)calloc(sizeof(Pkt_node), environment.num_servers);
+			for (int i = 0; i < environment.num_servers; ++i)
+			{
+				node.dv[i].server_id = 0;
+				node.dv[i].cost = USHRT_MAX;
+			}
 			environment.nodes[index-2] = node;
 			free(split_array);
 
@@ -113,27 +117,17 @@ void setupEvironment(int index , char *line)
 				split = strtok(NULL," ");
 			}
 			/******* Set self id *********/
-			if (self_id == 0){
-				self_id = split_array[0];
-			}
+			uint16_t self_id = split_array[0];
 			for (int i = 0; i < environment.num_servers; ++i)
 			{
-				Node node = environment.nodes[i];
-				/******* Set self cost and self_port *********/
-				if (node.server_id == self_id){
-					self_port = node.port;
-					self_ip = node.ip_addr_bin;
-					self_ip_str = node.ip_addr;
-					node.cost = 0;
-					node.next_hop_server_id = self_id;
-					environment.nodes[i] = node;
-				}else if(node.server_id == split_array[1]){ 
+				/******* Set self node global variable *********/
+				if (environment.nodes[i].server_id == self_id){
+					self_node = &environment.nodes[i];
+				}else if(environment.nodes[i].server_id == split_array[1]){ 
 					/******* Set state of neighbours *********/
-					node.cost = split_array[2];
-					node.neighbour = true;
-					node.next_hop_server_id = node.server_id;
-					environment.nodes[i] = node;
-
+					environment.nodes[i].cost = split_array[2];
+					environment.nodes[i].neighbour = true;
+					environment.nodes[i].next_hop_server_id = environment.nodes[i].server_id;
 				}
 			}
 
@@ -141,11 +135,3 @@ void setupEvironment(int index , char *line)
 	}
 }
 
-/******* Free allocated memory *********/
-void free_all(){
-	for (int j = 0; j < environment.num_servers; ++j)
-	{
-		free(environment.nodes[j].dv);
-	}
-	free(environment.nodes);
-}

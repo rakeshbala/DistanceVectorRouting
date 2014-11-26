@@ -12,6 +12,8 @@
 #include <netdb.h>
 #include <unistd.h>
 
+Node *self_node;
+
 void broadcast_packet(){
 	for (int i = 0; i < environment.num_servers; ++i)
 	{
@@ -77,11 +79,11 @@ void * make_pkt(){
     memcpy(packet, &(pkt_num_serv), 2);
 
     /******* Copy own server id *********/
-    uint16_t pkt_self_id = htons(self_port);
+    uint16_t pkt_self_id = htons(self_node->port);
     memcpy(packet+2, &(pkt_self_id), 2);
 
     /******* Copy each entry *********/
-    memcpy(packet+4, &(self_ip), 4);
+    memcpy(packet+4, &(self_node->ip_addr_bin), 4);
     for (int i = 0; i < environment.num_servers; ++i)
     {
 
@@ -113,6 +115,5 @@ void close_all(){
 	{
 		close(environment.nodes[i].socket);
 	}
-	free_all();
 	close(listening_socket);
 }
