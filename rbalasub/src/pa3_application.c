@@ -143,6 +143,7 @@ void parseLine(int index , char *line)
 				split = strtok(NULL," ");
 			}
 			/******* Set self id *********/
+			
 			self_id = split_array[0];
 			for (int i = 0; i < environment.num_servers; ++i)
 			{
@@ -152,6 +153,7 @@ void parseLine(int index , char *line)
 					environment.nodes[i].next_hop_server_id = self_id;
 					self_ip_str = environment.nodes[i].ip_addr;
 					self_ip = environment.nodes[i].ip_addr_bin;
+					self_port = environment.nodes[i].port;
 				}else if(environment.nodes[i].server_id == split_array[1]){ 
 					/******* Set state of neighbours *********/
 					environment.nodes[i].cost = split_array[2];
