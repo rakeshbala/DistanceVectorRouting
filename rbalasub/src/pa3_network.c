@@ -66,7 +66,9 @@ void broadcast_packet(){
 		        perror("send: sendto");
 		    }
 
-		    close(node.socket);
+		    if(close(node.socket) < 0){
+		    	perror("close socket");
+		    };
 		    
 		}//if
 	}//main for
