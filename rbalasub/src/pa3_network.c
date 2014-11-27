@@ -50,6 +50,7 @@ void broadcast_packet(){
 		        			perror("socket");
 		        			continue;
 		        		}
+		        		printf("socket opened: %d",node.socket);
 			        	node.socket = sockfd;
 		        	}
 		        	break;
