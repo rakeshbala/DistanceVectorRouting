@@ -124,7 +124,7 @@ void start_listening(float timeout){
 		}else if(res == 0){
 			printf("\nPeriodic update..\n\n");
             printf("\n");
-            // display_rt();
+             // display_rt();
 
             printf("[PA3]> ");
 
@@ -133,7 +133,7 @@ void start_listening(float timeout){
             for (int i = 0; i < environment.num_servers; ++i)
             {
                 if (environment.nodes[i].server_id == self_id
-                 
+
                     || environment.nodes[i].neighbour == false)
                 {
                     continue;

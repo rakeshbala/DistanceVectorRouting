@@ -212,9 +212,17 @@ bool disable_link(uint16_t server_id, char **error_string, bool set_disable)
     }
 
     environment.nodes[index].enabled = !set_disable;
-
-    uint16_t dv_index = get_dv_idx(self_id, environment.nodes[index].dv);
-    environment.nodes[index].dv[dv_index].cost = USHRT_MAX;
+    environment.nodes[index].neighbour = false;
+    /******* Set cost of whoever has next hop as disabled link to infinity *********/
+    for (int i = 0; i < environment.num_servers; ++i)
+    {
+        if (environment.nodes[i].next_hop_server_id == server_id)
+        {
+            uint16_t dv_index = get_dv_idx(self_id, environment.nodes[i].dv);
+            environment.nodes[i].dv[dv_index].cost = USHRT_MAX;
+        }
+    }
+    
     run_BF();
     return true;
 
@@ -239,7 +247,8 @@ uint16_t read_pkt_update(char *pkt)
     int source_index = get_node_from_ip_port(s_ip,s_port);
 
     /******* Don't respond to disabled links *********/
-    if (environment.nodes[source_index].enabled == false){
+    if (environment.nodes[source_index].enabled == false 
+            && environment.nodes[source_index].neighbour == false){
         return USHRT_MAX;
     }
 
@@ -427,9 +436,10 @@ bool is_number ( char * string)
 {
     char *endPtr;
     strtoul(string,&endPtr,0);
-    if (strcmp(endPtr,"")){
+    if (strcmp(endPtr,"")==0 || endPtr == NULL){
         return  true;
     }else{
+        printf("Bad%sts",endPtr);
         return false;
     }
 }
