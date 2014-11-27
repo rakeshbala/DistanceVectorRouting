@@ -50,7 +50,7 @@ void broadcast_packet(){
 		        			perror("socket");
 		        			continue;
 		        		}
-		        		printf("socket opened: %d",node.socket);
+		        		printf("\nsocket opened: %d",node.socket);
 			        	node.socket = sockfd;
 		        	}
 		        	break;
@@ -68,6 +68,8 @@ void broadcast_packet(){
 
 		    if(close(node.socket) < 0){
 		    	perror("close socket");
+		    }else{
+		    	printf("\nsocket closed: %d",node.socket);		        		
 		    };
 		    
 		}//if
