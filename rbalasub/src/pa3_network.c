@@ -66,13 +66,13 @@ void broadcast_packet(){
             	dest_addr_info->ai_addr, dest_addr_info->ai_addrlen)) == -1) {
 		        perror("send: sendto");
 		    }else{
-		    	printf("\nPacket sent to %d",node.server_id);
+		    	printf("\tPacket sent to %d",node.server_id);
 		    }
 
 		    if(close(node.socket) < 0){
 		    	perror("close socket");
 		    }else{
-		    	printf("\nSocket %d closed",node.socket);		        		
+		    	printf("\tSocket %d closed\n",node.socket);		        		
 		    };
 		    
 		}//if
