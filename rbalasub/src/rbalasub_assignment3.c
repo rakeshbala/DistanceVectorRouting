@@ -60,7 +60,7 @@ int main(int argc, char **argv)
         case 'i': {
         	char *endPtr;
         	float timeval = strtof(argv[optind],&endPtr);
-        	if (strcmp(endPtr,""))
+        	if (strcmp(endPtr,"") !=0 )
         	{
         		fprintf(stderr, "Usage: %s -t <Path to topology file> -i <Routing Update Interval>\
             	\n", argv[0]);

@@ -146,7 +146,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
 
             char *endPtr;
             uint16_t server_id = strtoul(argv[1],&endPtr,0);
-            if (strcmp(endPtr,"") == 0 || endPtr == NULL){
+            if (strcmp(endPtr,"") != 0){
                 error_string = (char *)"Invalid server id";
                 error_flag = true;
             }else{
@@ -438,7 +438,7 @@ bool is_number ( char * string)
 {
     char *endPtr;
     strtoul(string,&endPtr,0);
-    if (strcmp(endPtr,"")==0 || endPtr == NULL){
+    if (strcmp(endPtr,"") ==0 || endPtr == NULL){
         return  true;
     }else{
         printf("Bad%sts",endPtr);
