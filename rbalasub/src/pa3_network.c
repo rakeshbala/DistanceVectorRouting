@@ -72,8 +72,8 @@ void broadcast_packet(){
 		    if(close(node.socket) < 0){
 		    	perror("close socket");
 		    }else{
-		    	printf("\tSocket %d closed\n",node.socket);		        		
-		    };
+		    	printf("\tSocket %d closed\n[PA3]> ",node.socket);		        		
+		    }
 		    
 		}//if
 	}//main for

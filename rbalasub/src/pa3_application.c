@@ -43,7 +43,10 @@ void start_run_loop(char *top_file_path, float timeout)
 	start_listening(timeout);
 
 }
-
+/**
+ * Setup the global environment variable from topology file
+ * @param topology_file Topology file
+ */
 void setup_environment(FILE *topology_file)
 {
 	size_t size = 30;
@@ -51,7 +54,7 @@ void setup_environment(FILE *topology_file)
 	int index = 0;
 	/******* Parse each line of topology file*********/
 	while(getline(&line,&size,topology_file) != -1){
-		/******* Setup environment *********/
+		/******* Parse each line *********/
 		parseLine(index,line);
 		index++;
 	}
@@ -121,6 +124,7 @@ void parseLine(int index , char *line)
 			node.port = (uint16_t)strtoul(split_array[2],NULL,0);
 			node.neighbour = false;
 			node.cost = USHRT_MAX;
+			node.real_cost = USHRT_MAX;
 			node.next_hop_server_id = -1;
 			node.enabled = true;
 			node.socket = INT_MAX;
@@ -157,6 +161,7 @@ void parseLine(int index , char *line)
 				}else if(environment.nodes[i].server_id == split_array[1]){ 
 					/******* Set state of neighbours *********/
 					environment.nodes[i].cost = split_array[2];
+					environment.nodes[i].real_cost = split_array[2];
 					environment.nodes[i].neighbour = true;
 					environment.nodes[i].next_hop_server_id = environment.nodes[i].server_id;
 				}

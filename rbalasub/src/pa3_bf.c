@@ -37,8 +37,7 @@ void run_BF(){
 			if (compare_node.neighbour == true)
 			{
 				// self -----> j
-				uint16_t self_dv_index = get_dv_idx(self_id,compare_node.dv);
-				uint16_t cost_to_node = compare_node.dv[self_dv_index].cost;
+				uint16_t cost_to_node = compare_node.real_cost;
 
 				//j -------- > i
 				uint16_t dv_index = get_dv_idx(node.server_id,compare_node.dv);

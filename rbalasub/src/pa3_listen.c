@@ -141,7 +141,7 @@ void start_listening(float timeout){
                 if (environment.nodes[i].reset_timeout == false)
                 {
                     environment.nodes[i].timeout_counter++;
-                    printf("%d missed\n",environment.nodes[i].server_id);
+                    printf("\n%d missed\n",environment.nodes[i].server_id);
                     // debug()
                     if (environment.nodes[i].timeout_counter >=3)
                     {

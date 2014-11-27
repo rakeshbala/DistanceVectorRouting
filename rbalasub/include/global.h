@@ -18,6 +18,7 @@ typedef struct pkt_node_
 //[PA3] Routing Table Start
 typedef struct node_{
 	uint16_t cost;
+	uint16_t real_cost;
 	uint16_t server_id;
 	uint16_t port;
 	bool neighbour;

@@ -213,6 +213,7 @@ bool disable_link(uint16_t server_id, char **error_string, bool set_disable)
 
     environment.nodes[index].enabled = !set_disable;
     environment.nodes[index].neighbour = false;
+    environment.nodes[index].real_cost = USHRT_MAX;
     /******* Set cost of whoever has next hop as disabled link to infinity *********/
     for (int i = 0; i < environment.num_servers; ++i)
     {
@@ -415,6 +416,7 @@ bool update_cost (uint16_t my_id, uint16_t server_id, char *cost, char **error_s
                 /******* Update the corresponding distance vector *********/
                 int index = get_node(server_id);
                 int dv_index = get_dv_idx(my_id, environment.nodes[index].dv);
+                environment.nodes[index].real_cost = new_cost;
                 environment.nodes[index].dv[dv_index].cost = new_cost;
                 /******* Run the BF algo again *********/
                 run_BF();
