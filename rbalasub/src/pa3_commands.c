@@ -146,7 +146,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
 
             char *endPtr;
             uint16_t server_id = strtoul(argv[1],&endPtr,0);
-            if (strcmp(endPtr,"")){
+            if (strcmp(endPtr,"") == 0 || endPtr == NULL){
                 error_string = (char *)"Invalid server id";
                 error_flag = true;
             }else{
@@ -163,7 +163,7 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
     {
         cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);
         close_all(); //To remove
-        while(1){};
+        while(1){}
         
     }else if (strcasecmp("dump",argv[0])==0)
     {
@@ -184,7 +184,6 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         error_flag = true;
         error_string = (char *)"Unknown command";
     }
-
 
     if (error_flag)
     {
