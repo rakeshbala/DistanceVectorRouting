@@ -172,13 +172,6 @@ located at http://www.cse.buffalo.edu/faculty/dimitrio/courses/cse4589_f14/index
         {
             cse4589_print_and_log((char *)"%s:SUCCESS\n", command_string);          
         } 
-    }else if (strcasecmp("exit",argv[0])==0)
-    {
-        close_all();
-        exit(EXIT_SUCCESS);
-    }else if(strcasecmp("myip", argv[0])==0){
-        printf("%s\n",self_ip_str);
-        printf("%d\n",self_port); 
     }else
     {
         error_flag = true;
