@@ -50,8 +50,9 @@ void broadcast_packet(){
 		        			perror("socket");
 		        			continue;
 		        		}
-		        		printf("\nsocket opened: %d",node.socket);
 			        	node.socket = sockfd;
+			        	printf("\nsocket opened: %d",node.socket);
+
 		        	}
 		        	break;
 			    }
@@ -64,6 +65,8 @@ void broadcast_packet(){
 			if ((numbytes = sendto(node.socket, pkt, pkt_size, 0,
             	dest_addr_info->ai_addr, dest_addr_info->ai_addrlen)) == -1) {
 		        perror("send: sendto");
+		    }else{
+		    	printf("\nPacket setnt to %d",node.server_id);
 		    }
 
 		    if(close(node.socket) < 0){
