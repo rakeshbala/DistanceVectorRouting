@@ -122,11 +122,9 @@ void start_listening(float timeout){
 			perror("select");
 			exit(EXIT_FAILURE);
 		}else if(res == 0){
-			printf("\nPeriodic update..\n\n");
-            printf("\n");
+			printf("\nPeriodic update..\n");
              // display_rt();
 
-            printf("[PA3]> ");
 
             tv.tv_sec = (time_t)timeout;
             tv.tv_usec = (time_t)((timeout - tv.tv_sec)*1000000);
@@ -158,6 +156,8 @@ void start_listening(float timeout){
                 
             }
             broadcast_packet();
+            printf("[PA3]> ");
+
 
             
 		}
@@ -181,7 +181,6 @@ void start_listening(float timeout){
                         perror("recvfrom");
                     }else{
                         uint16_t server_id = read_pkt_update(pkt);
-                        packet_count++;//increment packet count for 'packets' comand
                         int index = get_node(server_id);
                         if (index != INT_MAX)
                         {

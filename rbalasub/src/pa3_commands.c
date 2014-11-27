@@ -251,6 +251,7 @@ uint16_t read_pkt_update(char *pkt)
             && environment.nodes[source_index].neighbour == false){
         return USHRT_MAX;
     }
+    packet_count++;//increment packet count for 'packets' comand
 
     printf("\n");
     cse4589_print_and_log((char *)"RECEIVED A MESSAGE FROM SERVER %d\n",environment.nodes[source_index].server_id);

@@ -51,7 +51,7 @@ void broadcast_packet(){
 		        			continue;
 		        		}
 			        	node.socket = sockfd;
-			        	printf("\nsocket %d opened",node.socket);
+			        	// printf("\nsocket %d opened",node.socket);
 
 		        	}
 		        	break;
@@ -66,13 +66,13 @@ void broadcast_packet(){
             	dest_addr_info->ai_addr, dest_addr_info->ai_addrlen)) == -1) {
 		        perror("send: sendto");
 		    }else{
-		    	printf("\tPacket sent to %d",node.server_id);
+		    	printf("\nPacket sent to %d\n",node.server_id);
 		    }
 
 		    if(close(node.socket) < 0){
 		    	perror("close socket");
 		    }else{
-		    	printf("\tSocket %d closed\n[PA3]> ",node.socket);		        		
+		    	// printf("\tSocket %d closed\n",node.socket);		        		
 		    }
 		    
 		}//if
