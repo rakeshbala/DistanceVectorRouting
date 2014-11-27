@@ -123,6 +123,7 @@ void parseLine(int index , char *line)
 			node.ip_addr_bin = ipaddress.s_addr;
 			node.port = (uint16_t)strtoul(split_array[2],NULL,0);
 			node.neighbour = false;
+			//cost and real_cost kind of redundant 
 			node.cost = USHRT_MAX;
 			node.real_cost = USHRT_MAX;
 			node.next_hop_server_id = -1;

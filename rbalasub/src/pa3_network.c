@@ -15,7 +15,9 @@
 uint16_t self_port;
 uint32_t self_ip;
 
-
+/**
+ * Broadcast packet to all neighbours
+ */
 void broadcast_packet(){
 	for (int i = 0; i < environment.num_servers; ++i)
 	{
@@ -79,6 +81,10 @@ void broadcast_packet(){
 	}//main for
 }
 
+/**
+ * Make packet to be sent 
+ * @return Concatenate bits with appropriate length to form the packet to be sent
+ */
 void * make_pkt(){
 	/******* Calculate size of the packet *********/
     size_t pkt_size = 8 + 12*environment.num_servers;

@@ -44,6 +44,7 @@ void run_BF(){
 				uint16_t cost_from_node = compare_node.dv[dv_index].cost;
 
 				//self---->j---->i
+				//handle USHRT_MAX wrap around
 				uint16_t total_cost = /*if*/(cost_from_node == USHRT_MAX || cost_to_node == USHRT_MAX)?
 									  /*then*/USHRT_MAX :/*else*/cost_to_node+cost_from_node;
 
